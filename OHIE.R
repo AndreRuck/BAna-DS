@@ -65,5 +65,3 @@ joineddf <- full_join(select(oregonhie_descritpive_vars, !matches(descriptive_va
 joineddf <- full_join(joineddf, select(oregonhie_inperson_vars, !matches(inperson_vars_del)), by = "person_id")
 joineddf <- full_join(joineddf, select(oregonhie_patterns_vars, !matches(patterns_vars_del)), by = "person_id")
 joineddf <- full_join(joineddf, select(oregonhie_stateprograms_vars, !matches(stateprogram_vars_del)), by = "person_id")
-
-
