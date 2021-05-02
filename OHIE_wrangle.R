@@ -68,6 +68,7 @@ joineddf <- full_join(joineddf, select(oregonhie_patterns_vars, !matches(pattern
 joineddf <- full_join(joineddf, select(oregonhie_stateprograms_vars, !matches(stateprogram_vars_del)), by = "person_id")
 
 joineddf <- select(joineddf, !contains("_cens_"))
+
 ###deleting values with high no. of NA's, they might still be relevant.
 joineddf <- purrr::discard(joineddf, ~sum(is.na(.x))/length(.x)* 100 >= 69)
 #x <- which(colnames(joineddf) %in% colnames(yyy))
@@ -105,7 +106,7 @@ xxx <- mutate(joineddf,
 
 
 #delete aggregated columns
-yyy <- select(xxx, !matches(c(#additional values to delete
+xxx <- select(xxx, !matches(c(#additional values to delete
                               "household_id", "birthyear_list.y", "female_list.y", "english_list", #additional values to delete
                               "birthyear_list.x", "female_list.x", #basic transformation
             
@@ -122,7 +123,7 @@ yyy <- select(xxx, !matches(c(#additional values to delete
                               "tanf_ever_prenotify07", "tanf_ever_presurvey12m", "tanf_ever_matchn_30sep2009", "tanf_ever_firstn_survey12m",
                               "tanf_tot_hh_prenotify07", "tanf_tot_hh_presurvey12m", "tanf_tot_hh_30sep2009", "tanf_tot_hh_firstn_survey12m")))
 
-levels(yyy$sex) <- c("Male", "Female")
+levels(xxx$sex) <- c("Male", "Female")
 
 saveRDS(yyy, "OHIE_Wrangled.RDS")
 
