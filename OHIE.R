@@ -64,4 +64,10 @@ OHIE_data_filter <- OHIE_data_filter[-index]
 joineddf <- full_join(select(oregonhie_descritpive_vars, !matches(descriptive_var_del)),select(oregonhie_ed_vars, !matches(ed_vars_del)), by = "person_id")
 joineddf <- full_join(joineddf, select(oregonhie_inperson_vars, !matches(inperson_vars_del)), by = "person_id")
 joineddf <- full_join(joineddf, select(oregonhie_patterns_vars, !matches(patterns_vars_del)), by = "person_id")
+
 joineddf <- full_join(joineddf, select(oregonhie_stateprograms_vars, !matches(stateprogram_vars_del)), by = "person_id")
+
+joineddf <- full_join(joineddf, select(oregonhie_stateprograms_vars, !matches(stateprogram_vars_del)), by = "person_id")
+
+  #xxx <- mutate(joineddf, number_ed_visits = num_visit_pre_cens_ed + num_visit_cens_ed)
+joined <- select(joineddf, matches("any_visit_pre_ed","any_visit_ed", "num_visit_pre_cens_ed", "num_visit_cens_ed",""))
