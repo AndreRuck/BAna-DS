@@ -12,6 +12,7 @@ library(NbClust)
 library(car)
 library(stargazer)
 options(scipen=999)
+##dob
 
 ##### Part 1 #############################################################################################
 # Import and inspection
