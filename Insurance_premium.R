@@ -1,0 +1,421 @@
+library(ggplot2)
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+library(ggridges)
+library(corrplot)
+library(ggpubr)
+library(moments)
+library(Hmisc)
+library(factoextra)
+library(NbClust)
+library(car)
+library(stargazer)
+options(scipen=999)
+
+##### Part 1 #############################################################################################
+# Import and inspection
+insurance <- read_csv("insurance.csv")
+insurance
+
+str(insurance)
+summary(insurance)
+
+##### Part 2 ###############################################################################################
+## Transformation: Factor and log for positive skewness expenses
+insurance$sex <- factor(insurance$sex)
+insurance$smoker <- factor(insurance$smoker)
+insurance$region <- factor(insurance$region)
+insurance$children <- as.factor(insurance$children)
+insurance$logexpenses = log(insurance$expenses)
+
+##### Part 3 ###############################################################################################
+### Visualize Distribution ####
+# Histogram 1: expenses. Positive skew, as a result transformation needed for regression analysis.
+hist(insurance$expenses, xlab="Expenses", ylab="Count", main="Distribution of Expenses", breaks=200)
+
+#Density 1.1: expenses. Other example with density.
+ggplot(insurance, aes(x=expenses)) + 
+  geom_density(color="darkblue", fill="lightblue") + labs(title="expenses")
+
+#Histogram log expenses 2: More like normal distribution
+hist(insurance$logexpenses, xlab=" log Expenses", ylab="Count", main="Distribution of log Expenses", breaks=100)
+
+#Density 2.1: logexpenses. Other example with density.
+ggplot(insurance, aes(x=logexpenses)) + 
+  geom_density(color="darkblue", fill="brown") + labs(title="expenses")
+
+# Density 3: expenses per smoker: much riskcosts for smokers
+ggplot(insurance, aes(x=expenses, fill=smoker)) +
+  geom_density(alpha=0.4) + theme(legend.position="bottom") + labs(title="expenses / smoker")
+
+# Density 4: bmi & children: less bmi with 5 children
+ggplot(insurance, aes(x = bmi, y = children, fill = children)) + 
+  geom_density_ridges() + theme_ridges() + ylab("children")+ xlab("bmi") + scale_y_discrete(limits=c("0","1", "2", "3", "4", "5"))
+
+#Boxplot 5: region & expenses#
+insurance %>%
+  ggplot( aes(x=region, y=expenses, fill=region)) +
+  geom_boxplot() +
+  scale_fill_viridis(discrete = TRUE, alpha=0.6) +
+  geom_jitter(color="black", size=0.4, alpha=0.9) +
+  theme_ipsum() +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=11)
+  ) +
+  ggtitle("expenses per region") +
+  xlab("region") + ylab("region")
+
+#Violin 6: children & expenses
+insurance$children = with(insurance, reorder(children, expenses, median))
+insurance %>%
+  ggplot( aes(x=children, y=expenses, fill=children)) + 
+  geom_violin() +
+  xlab("children") + scale_x_discrete(limits=c("0","1", "2", "3", "4", "5"))
+  theme(legend.position="none") +
+  ylab("expenses")
+  
+#Scatter 7: bmi & expenses with smoking: Smokers pay much more
+ggplot(insurance, aes(x=bmi, y=expenses)) + geom_point(aes(color=smoker))
+
+#Scatter 7.1: There are 3 important clusters
+ggplot(insurance, aes(x=bmi, y=expenses)) + 
+  geom_point(aes(color=age)) + scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+#Scatter 7.2: Nice regression by age with different stages
+ggplot(insurance, aes(x=age, y=expenses)) + 
+  geom_point(aes(color=bmi)) +  scale_color_gradient(low = "yellow", high = "darkblue")  + facet_grid(.~smoker)
+
+
+
+##### Part 4 ###############################################################################################
+#### Correlation
+# Tidy
+insurance.cor <- read_csv("insurance.csv")
+insurance$children <- as.numeric(insurance$children)
+insurance.cor$sex <- as.numeric(ifelse(insurance.cor$sex == "female",0,1))
+insurance.cor$smoker <- as.numeric(ifelse(insurance.cor$smoker == "yes",1,0))
+insurance_cor_tidy <- insurance.cor[,-6]
+
+# Corrplot: smoking and age strong negative and moderat positve corelation with expenses 
+insurance_cor_plot <- round(cor(insurance_cor_tidy),2)
+corrplot(insurance_cor_plot , method="color")
+corrplot(insurance_cor_plot , method="number")
+
+# Test both correlations: p-value
+cor.test(insurance_cor_tidy$smoker, insurance_cor_tidy$expenses, method = c("pearson"))
+cor.test(insurance_cor_tidy$age, insurance_cor_tidy$expenses, method = c("pearson"))
+
+# Statistics nice displayed
+mod.corr <- rcorr(as.matrix(insurance_cor_tidy), type = "pearson")
+stargazer(data.frame(mod.corr$r), summary=F, type="text")
+stargazer(data.frame(mod.corr$P), summary=F, type="html", out ="cor.html")
+stargazer(data.frame(mod.corr$P), summary=F, type="text")
+
+##### Part 5 ###############################################################################################
+### Aggregate statistics 
+insurance.num <- insurance_cor_tidy
+insurance.agg <- select_if(insurance.num, is.numeric)
+
+## Function 
+stat.summary <- function(insurance.agg) {
+  total <- data.frame(
+    n  = sapply(insurance.agg, length),
+    mean = sapply(insurance.agg, mean, na.rm=T),
+    median = sapply(insurance.agg, median, na.rm=T),
+    sd = sapply(insurance.agg, sd, na.rm=T),
+    var= sapply(insurance.agg, var, na.rm=T),
+    kurt= sapply(insurance.agg, kurtosis, na.rm=T),
+    skew= sapply(insurance.agg, skewness, na.rm=T),
+    q1 = sapply(insurance.agg, quantile, probs = 0.25, na.rm=T),
+    q3 = sapply(insurance.agg, quantile, probs = 0.75, na.rm=T),
+    min =  sapply(insurance.agg, min, na.rm=T),
+    max =  sapply(insurance.agg, max, na.rm=T)
+    
+  )
+  return(total)
+}
+
+# Displayed
+stat.summary <- round(stat.summary(insurance.agg),2)
+stargazer(stat.summary, type="text", summary=F)
+stargazer(stat.summary, type="html", summary=F, out ="overview.html")
+
+
+##### Part 5 ###############################################################################################
+#### Multi-Regression model with different features ###
+insurance <- read_csv("insurance.csv")
+insurance$sex <- factor(insurance$sex)
+insurance$smoker <- factor(insurance$smoker)
+insurance$region <- factor(insurance$region)
+insurance$children <- factor(insurance$children)
+insurance$logexpenses = log(insurance$expenses)
+
+# preparing diffrent features
+FORMULA <- expenses ~ age + sex + bmi + children + smoker + region
+ols.lm <- lm(data=insurance, FORMULA)
+summary(ols.lm)
+
+mod.ols1 <- update(ols.lm,   ~  smoker)
+mod.ols2 <- update(ols.lm, .  ~  smoker + bmi )
+mod.ols3 <- update(ols.lm, .  ~  smoker + bmi + region)
+mod.ols4 <- update(ols.lm, .  ~  smoker + bmi + region + sex)
+mod.ols5 <- update(ols.lm, .  ~  smoker + bmi + region + sex + children )
+mod.ols6 <- update(ols.lm, .  ~  smoker + bmi + region + sex + children + age )
+mod.ols7 <- update(ols.lm, .  ~  smoker + age + sex + bmi)
+
+stargazer(mod.ols1, mod.ols2, mod.ols3, mod.ols4, mod.ols5, mod.ols6, mod.ols7, type ="text", summary= TRUE)
+stargazer(mod.ols1, mod.ols2, mod.ols3, mod.ols4, mod.ols5, mod.ols6, mod.ols7, type ="html", out = "statistik.html")
+
+
+##### Part 5 ###############################################################################################
+### Testing Model##
+n=nrow(insurance)
+set.seed(123)
+index = sample(1:n, size = round(n*0.75), replace=FALSE)
+insurance.train = insurance[index,]
+insurance.test = insurance[-index,]
+
+insurance.expenses=insurance.train
+insurance.expenses$logexpenses=NULL
+insurance.logexpenses=insurance.train
+insurance.logexpenses$expenses=NULL
+
+model1 = lm(expenses~.,data=insurance.expenses)
+summary(model1)
+vif(model1)
+
+model1_step=step(model1)
+summary(model1_step)
+vif(model1_step)
+
+model2 = lm(logexpenses~.,data=insurance.logexpenses)
+summary(model2)
+vif(model2)
+
+model2_step=step(model2)
+summary(model2_step)
+vif(model2_step)
+
+# Function fro performance
+RMSE=function(actual,predicted){
+  return(sqrt(mean((predicted-actual)^2)))}
+
+# Predictions
+predictions.model1=predict(model1, newdata=insurance.test)
+predictions.model1_step=predict(model1_step, newdata=insurance.test)
+predictions.model2=exp(predict(model2, newdata=insurance.test))
+predictions.model2_step=exp(predict(model2_step, newdata=insurance.test))
+
+plot(predictions.model1,insurance.test$expenses)
+plot(predictions.model1_step,insurance.test$expenses)
+
+# Results RMSE fro different models
+result <- data.frame(Model1=RMSE(predictions.model1,insurance.test$expenses),
+           Model1_step=RMSE(predictions.model1_step,insurance.test$expenses),
+           Model2=RMSE(predictions.model2,insurance.test$expenses),
+           Model2_step=RMSE(predictions.model2_step,insurance.test$expenses))
+result
+
+##### Part 6 ###############################################################################################
+### Optimization model by adding organic variable cluster k-means 
+#Trainset clustering expenses: age, bmi and expenses
+df.train <- insurance.train[,c(1,3, 7)]
+df.scale.train <- as.data.frame(scale(df.train))
+head(df.scale.train)
+
+set.seed(123)
+expenses_K2.train <- kmeans(df.scale.train, centers = 3, nstart = 25)
+
+fviz_cluster(expenses_K2.train, data = df.scale.train)
+insurance.train$cluster <- as.factor(expenses_K2.train$cluster)
+
+
+#Testset clustering: age, bmi and expenses
+df.test <- insurance.test[,c(1,3, 7)]
+df.scale.test <- as.data.frame(scale(df.test))
+head(df.scale.test)
+
+set.seed(123)
+expenses_K2.test <- kmeans(df.scale.test, centers = 3, nstart = 25)
+
+fviz_cluster(expenses_K2.test, data = df.scale.test)
+insurance.test$cluster <- as.factor(expenses_K2.test$cluster)
+### only center of 3 is good. if higher then 3 then vif > 10. if less then 3 then RMSE is higher then standard model
+
+##### Part 7 ###############################################################################################
+### Testing Model with cluster##
+insurance.expenses=insurance.train
+insurance.expenses$logexpenses=NULL
+insurance.logexpenses=insurance.train
+insurance.logexpenses$expenses=NULL
+
+## Massive better r-squared with 3 groups from 0.75 to 0.89 non log. vif is okay
+model1.cl = lm(expenses~.,data=insurance.expenses)
+summary(model1.cl)
+vif(model1.cl)
+
+model1_step.cl=step(model1.cl)
+summary(model1_step.cl)
+vif(model1_step.cl)
+
+model2.cl = lm(logexpenses~.,data=insurance.logexpenses)
+summary(model2.cl)
+vif(model2.cl)
+
+model2_step.cl=step(model2.cl)
+summary(model2_step.cl)
+vif(model2_step.cl)
+
+
+predictions.model1.cl=predict(model1.cl, newdata=insurance.test)
+predictions.model1_step.cl=predict(model1_step.cl, newdata=insurance.test)
+predictions.model2.cl=exp(predict(model2.cl, newdata=insurance.test))
+predictions.model2_step.cl=exp(predict(model2_step.cl, newdata=insurance.test))
+
+plot(predictions.model1.cl,insurance.test$expenses)
+plot(predictions.model1_step.cl,insurance.test$expenses)
+
+# Results RMSE for different models
+result.cluster <- data.frame(Model1.cl=RMSE(predictions.model1.cl,insurance.test$expenses),
+                     Model1_step.cl=RMSE(predictions.model1_step.cl,insurance.test$expenses),
+                     Model2.cl=RMSE(predictions.model2.cl,insurance.test$expenses),
+                     Model2_step.cl=RMSE(predictions.model2_step.cl,insurance.test$expenses))
+
+result.cluster
+
+##### Part 8 ###############################################################################################
+# Combining & compaing 
+stargazer(result, result.cluster, type ="text", summary= FALSE)
+stargazer(stat.summary, type="text", summary=F)
+
+# Result linear modell with clustering k-means 3 R2 from 0.75 to around 0.9
+# RMSE from 5770 to 3815 40% better
+plot(predictions.model1, insurance.test$expenses, xlab="predicted",ylab="actual", main="prediction")
+abline(a=0, b= 1)
+plot(predictions.model1.cl, insurance.test$expenses, xlab="predicted",ylab="actual")
+abline(a=0, b= 1)
+
+plot.pred.act <- data.frame(predictions.model1, insurance.test$expenses)
+plot.pred.act.cl <- data.frame(predictions.model1.cl, insurance.test$expenses)
+
+ggplot(plot.pred.act, aes(x=predictions.model1, y= insurance.test$expenses )) + 
+  geom_point(color="blue", alpha = 0.5) + geom_smooth(method = "lm") +
+  theme(legend.position="none",
+    plot.title = element_text(size=11)
+  ) +
+  ggtitle("Predictions vs actual") +
+  xlab("predicted") + ylab("actual")
+
+ggplot(plot.pred.act.cl, aes(x=predictions.model1.cl, y= insurance.test$expenses )) + 
+  geom_point(color= "red", alpha = 0.5) + geom_smooth(method = "lm") +
+  theme(legend.position="none",
+        plot.title = element_text(size=11)) +
+  ggtitle("Predictions vs actual with cluster") +
+  xlab("predicted") + ylab("actual")
+
+##### Part 9 ###############################################################################################
+# linear Model without region 
+insurance.expenses$region=NULL
+insurance.logexpenses$region=NULL
+
+## Massive better r-squared with 3 groups from 0.75 to 0.89 non log. vif is okay
+model1.cl.region = lm(expenses~.,data=insurance.expenses)
+summary(model1.cl.region)
+vif(model1.cl.region)
+
+model1_step.cl.region=step(model1.cl.region)
+summary(model1_step.cl.region)
+vif(model1_step.cl.region)
+
+model2.cl.region = lm(logexpenses~.,data=insurance.logexpenses)
+summary(model2.cl.region)
+vif(model2.cl.region)
+
+model2_step.cl.region=step(model2.cl.region)
+summary(model2_step.cl.region)
+vif(model2_step.cl.region)
+
+predictions.model1.cl.region=predict(model1.cl.region, newdata=insurance.test)
+predictions.model1_step.cl.region=predict(model1_step.cl.region, newdata=insurance.test)
+predictions.model2.cl.region=exp(predict(model2.cl.region, newdata=insurance.test))
+predictions.model2_step.cl.region=exp(predict(model2_step.cl.region, newdata=insurance.test))
+
+plot(predictions.model1.cl.region,insurance.test$expenses)
+plot(predictions.model1_step.cl.region,insurance.test$expenses)
+
+# Results RMSE fro different models
+result.cluster.region <- data.frame(Model1.cl.region=RMSE(predictions.model1.cl.region,insurance.test$expenses),
+                             Model1_step.cl.region=RMSE(predictions.model1_step.cl.region,insurance.test$expenses),
+                             Model2.cl.region=RMSE(predictions.model2.cl.region,insurance.test$expenses),
+                             Model2_step.cl.region=RMSE(predictions.model2_step.cl.region,insurance.test$expenses))
+
+result.cluster.region
+
+## With sex, smoker, children, bmi and cluster 0.9r2 and even better RMSE then with region linear model
+stargazer(result.cluster, result.cluster.region,  type ="text", summary= FALSE)
+
+ggplot(insurance.expenses, aes(x=bmi, y= expenses)) + geom_point(aes(color=factor(cluster))) + 
+  facet_grid(.~smoker) + ggtitle("smokers vs non smokers")
+
+
+##### For our Project ###############
+# Best approach without variable region (drop). Performance is still okay.
+# Modell 1 step ist the best multi
+n=nrow(insurance)
+set.seed(123)
+index = sample(1:n, size = round(n*0.75), replace=FALSE)
+insurance.train = insurance[index,]
+insurance.test = insurance[-index,]
+
+insurance.expenses=insurance.train
+insurance.expenses$logexpenses=NULL
+insurance.logexpenses=insurance.train
+insurance.logexpenses$expenses=NULL
+insurance.expenses$region=NULL
+insurance.logexpenses$region=NULL
+
+model1 = lm(expenses~.,data=insurance.expenses)
+summary(model1)
+vif(model1)
+
+model1_step=step(model1)
+summary(model1_step)
+vif(model1_step)
+
+model2 = lm(logexpenses~.,data=insurance.logexpenses)
+summary(model2)
+vif(model2)
+
+model2_step=step(model2)
+summary(model2_step)
+vif(model2_step)
+
+# Function fro performance
+RMSE=function(actual,predicted){
+  return(sqrt(mean((predicted-actual)^2)))}
+
+# Predictions
+predictions.model1=predict(model1, newdata=insurance.test)
+predictions.model1_step=predict(model1_step, newdata=insurance.test)
+predictions.model2=exp(predict(model2, newdata=insurance.test))
+predictions.model2_step=exp(predict(model2_step, newdata=insurance.test))
+
+plot(predictions.model1,insurance.test$expenses)
+plot(predictions.model1_step,insurance.test$expenses)
+
+# Results RMSE fro different models
+result <- data.frame(Model1=RMSE(predictions.model1,insurance.test$expenses),
+                     Model1_step=RMSE(predictions.model1_step,insurance.test$expenses),
+                     Model2=RMSE(predictions.model2,insurance.test$expenses),
+                     Model2_step=RMSE(predictions.model2_step,insurance.test$expenses))
+result
+
+ ##################### For Shiny
+
+model = lm(expenses~.,data=insurance.expenses)
+model_step = step(lm(expenses~.,data=insurance.expenses))
+
+saveRDS(model, file="model.rds")
+saveRDS(model_step, file="model.step.rds")
