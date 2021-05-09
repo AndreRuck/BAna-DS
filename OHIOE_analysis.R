@@ -16,4 +16,9 @@ m.lm <- lm()
 #Initial tree based methods----
 
 
-#Initial support vecor machiene----
+#Possible further algorithms----
+ #support vecor machiene <- mainly used for classification problems, but regression can also be done
+  #do not yet know about usefullness in this setting
+ #neural nets
+ #estensions to linear model:
+  #interaction terms
