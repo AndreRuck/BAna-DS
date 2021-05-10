@@ -13,4 +13,6 @@ OHIE_wrangled.RDS = the cleaned dataframe. This forms the base of our OHIE analy
 
 OHIE_featureSelection = depreciated OHIE data wrangling script
 
+OHIE_analysis.R = forecasting models on OHIE dataset, which is imported from OHIE_wrangled
+
 lineare model regression save (without region but step model)
