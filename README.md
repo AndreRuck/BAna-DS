@@ -15,4 +15,4 @@ OHIE_featureSelection = depreciated OHIE data wrangling script
 
 OHIE_analysis.R = forecasting models on OHIE dataset, which is imported from OHIE_wrangled
 
-lineare model regression save (without region but step model)
+lineare model regression save (step model)
