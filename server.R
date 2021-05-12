@@ -1,47 +1,44 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
+library(hrbrthemes)
+library(viridis)
+library(ggridges)
 library(shiny)
-library(data.table)
 library(ggplot2)
+library(data.table)
+library(DT)
 
 insurance = fread("insurance.csv")
-insurance$sex <- factor(insurance$sex)
-insurance$smoker <- factor(insurance$smoker)
-insurance$children <- as.factor(insurance$children)
+insurance$smoker=as.factor(insurance$smoker)
 
-# Define server logic required to draw a histogram
-shinyServer(function(input, output) {
-  
-  output$plot1 = renderPlot({
-    # x_axis1 = input$ageInput
-    # ggplot(insurance, aes(x=x_axis1, fill=smoker)) +
-    #   geom_density(alpha=0.4) + theme(legend.position="bottom") + labs(title="expenses / smoker")
-    bmi1 = input$bmiInput
-    children1 = input$childrenInput
-    smoker1 = factor(input$smokeInput)
-    # 
-    # ggplot(insurance, aes(x = bmi1, y = children1, fill = children1)) + 
-    #   geom_density_ridges() + theme_ridges() + ylab("children")+ xlab("bmi") + scale_y_discrete(limits=c("0","1", "2", "3", "4", "5"))
+shinyServer(function(input, output){
     
-    ggplot(insurance, aes(x=bmi1, y=expenses)) + geom_point(aes(color=factor(smoker1)))
+    filtered = reactive({
+        filtered=insurance[age >= input$ageInput[1] & age <= input$ageInput[2]]
+        filtered
+    })
     
-
-  })
-  prediction = reactive({
-    model = readRDS("model.RDS")
-    insuranceDT = (insurance)
-  })
-  
-  output$prediction1 = renderTable({
-    insuranceDT = setDT(insurance)
-    insuranceDT[, c("expenses")]
-  })
+    output$plot = renderPlot({
+        
+        y_axis = input$selectedColsy
+        
+        ggplot(filtered(), aes_string(x="bmi", y=y_axis))+
+            geom_point(aes(color=age), 
+                       alpha=(input$ageInput[2]/80)) + scale_color_gradientn(colors = c("#00AFBB", "#E7B800", "#FC4E07"))
+    })
     
+    
+    filteredd = reactive({
+        filteredd=insurance[age >= input$ageInputt[1] & age <= input$ageInputt[2] & bmi >= input$bmiInputt[1] & bmi <= input$bmiInputt[2] &
+                                sex %in% input$genderInputt,,]
+        filteredd
+    })
+    
+    output$plot2 = renderPlot({
+        
+        y_axis = input$selectedColsyy
+        x_axis = input$selectedColsxx
+        
+        ggplot(filteredd(), aes_string(x=x_axis, y=y_axis)) +
+            geom_point(aes(color=smoker), 
+                       alpha=(input$ageInput[2]/80))
+    })
 })
