@@ -15,4 +15,6 @@ OHIE_featureSelection = depreciated OHIE data wrangling script
 
 OHIE_analysis.R = forecasting models on OHIE dataset, which is imported from OHIE_wrangled
 
-lineare model regression save (step model)
+model_step_rds = predictions multi model regression save (step model)
+
+ui and server: 1. step genrating by visualization done. 2. making predictions based on the inputs is not finished yet.
