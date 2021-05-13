@@ -3,6 +3,9 @@
 library(Metrics)
 library(tidyverse)
 library(corrplot)
+library(Hmisc)
+
+library(dlstats) #package to check download statistics of packages
 
 library(tree)
 library(randomForest)
@@ -24,26 +27,45 @@ any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain
   any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + 
   any_ed_psychiatric_condition_or_substance_abuse + food_assistance + charge_food_assistance + 
   temporary_assistance + charge_temporary_assistance"
+
+#dataframe with all variables that could generally be included in the model
 ohieVariables <- ohie %>% 
   select(!c("person_id", "treatment", "dt_retro_coverage", "numhh_list", "numhh_list",
-                                "ed_charge_total", "zip_msa_list")) #%>%  #zip_msa_list would generally work as predictor but it
+                                "ed_charge_total", "zip_msa_list")) #zip_msa_list would generally work as predictor but it
 #contains only one possible value, which renders it useless for actual predictions
-  #select(!c())
-  
-ohieVariables$sex <- as.numeric(ohieVariables$sex=="Female")
-  
-ohieVariables_nNA <- drop_na(ohieVariables)
 
+ohieVariables$sex <- as.numeric(ohieVariables$sex=="Female")
+
+
+#Creating train and test data with different imputation methods----
+
+#no imputation
 set.seed(1111)
 index <- sample(x=c(1:length(ohie$person_id)), size=trunc(length(ohie$person_id)*0.7), replace = FALSE)
 train <- ohieVariables[index,]
 test <- ohieVariables[-index,]
 
+#listwise deletion
+ohieVariables_nNA <- drop_na(ohieVariables)
+
+#dataframe with variables removed, that showed to decrease model performance
+ohieVariables2 <- select(ohieVariables, !c("any_ed_psychiatric_condition_or_substance_abuse", "food_assistance",
+                                           "temporary_assistance"))
+ohieVariables_nNA2 <- drop_na(ohieVariables2)
+#does not result in any more observations i.e. does not make a difference for model performance if 
+#imputation method is listwise deletion
 set.seed(1111)
 index_nNA <- sample(x=c(1:length(ohieVariables_nNA$age)), size=trunc(length(ohieVariables_nNA$age)*0.7),
                     replace = FALSE)
 train_nNA <- ohieVariables_nNA[index_nNA,]
 test_nNA <- ohieVariables_nNA[-index_nNA,]
+
+#mean substitution (with Hmisc)
+
+
+ohieVariables_DepnNA <- drop_na(ohieVariables, any_of("charge_total"))
+
+ohieVariables_mean <- 
 
 
 
@@ -82,6 +104,7 @@ rmse(test_nNA$charge_total, p.lm_nn) #[1] 16709.32
 #Interpretation: The logical values resulting from the conditional branches of the survey do not add valuable information
 #if the numerical value is in the dataset <- test with random forest shows the same
 
+
 Sys.time()
 #dred.lm <- dredge(global.model = m.lm_nn) #should take between 32 and 44 minutes; took only around 15min
 #Restult: The model with the lowest AIC score (among of the possible models without the two variables for logical values in 
@@ -96,6 +119,21 @@ m.lm_aic <- lm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits +
                  charge_temporary_assistance, train_nNA, na.action = "na.fail")
 p.lm_aic <- predict.lm(m.lm_aic, newdata = test_nNA)
 rmse(test_nNA$charge_total, p.lm_aic) #[1] 16700.77
+
+#adding interaction terms with variable sex to highest AICc model
+m.lm_it <- lm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
+                 any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
+                 any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + charge_food_assistance + 
+                 charge_temporary_assistance + sex:any_ed_headache + sex:preperiod_any_visits +
+                sex:age + sex:any_ed_visits + sex:any_ed_chronic_condition + sex:any_ed_injury +
+                sex:any_ed_back_pain, train_nNA)
+p.lm_it <- predict.lm(m.lm_it, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.lm_it) #16649.42
+#Interaction terms with sex that led to worse results: any_ed_depressio, any_ed_skin_condition, any_ed_abdominal_pain
+ #any_ed_heart_or_chest_pain, charge_food_assistance
+ #did not change it at all: charge_temporary_assistance
+#Result: Interaction terms with variable sex could improve the result a bit, but the model is still a bit worse than
+ #the random forest model
 
 #Initial tree based methods----
 
@@ -129,16 +167,40 @@ m.fo_nn <- randomForest(charge_total ~ preperiod_any_visits + age + sex + any_ed
                 any_ed_psychiatric_condition_or_substance_abuse + food_assistance + 
                 temporary_assistance, train_nNA, na.action = "na.fail")
 p.fo_nn <- predict(m.fo_nn, newdata = test_nNA)
-rmse(test_nNA$charge_total, p.fo_nn) #[1] 16659.06 ;  sqrt=129.07
+rmse(test_nNA$charge_total, p.fo_nn) #[1] 16659.06
+
+#features that were used in the model with the highest AIC in lm
+m.fo_aic <- randomForest(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
+                 any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
+                 any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + charge_food_assistance + 
+                 charge_temporary_assistance, train_nNA, na.action = "na.fail")
+p.fo_aic <- predict(m.fo_aic, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.fo_aic) #[1] 16550.61
+
+#adding esxplicit interactions, namely those interactions with sex that were found to be helpful in the lm model
+m.fo_it <- randomForest(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
+                any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
+                any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + charge_food_assistance + 
+                charge_temporary_assistance + sex:any_ed_headache + sex:preperiod_any_visits +
+                sex:age + sex:any_ed_visits + sex:any_ed_chronic_condition + sex:any_ed_injury +
+                sex:any_ed_back_pain, train_nNA)
+p.lm_fo <- predict(m.fo_it, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.lm_fo) #[1] 16564.99
+#Result: the result was actually worse
+#improvements were not really to be expected, since due to their structure random forests should implicitly model
+#interactions, by themselves, fairly well
+
 
 
 
 #Support Vector Regression-----
 
+#Initial model
 m.sv <- svm(charge_total ~ ., train_nNA)
 p.sv <- predict(m.sv, newdata = test_nNA)
 rmse(test_nNA$charge_total, p.sv) #[1] 20437.4
 
+#Logical features removed if both logical and numeric is available
 m.sv_nn <- svm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
                  any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
                  any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + 
@@ -146,6 +208,14 @@ m.sv_nn <- svm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits +
                  temporary_assistance, train_nNA)
 p.sv_nn <- predict(m.sv_nn, newdata = test_nNA)
 rmse(test_nNA$charge_total, p.sv_nn) #[1] 17439.04
+
+#features that were used in the model with the highest AIC in lm
+m.sv_aic <- svm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
+                           any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
+                           any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + charge_food_assistance + 
+                           charge_temporary_assistance, train_nNA)
+p.sv_aic <- predict(m.sv_aic, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.sv_aic) #[1] 17409.03
 
 
 #Possible further algorithms----
