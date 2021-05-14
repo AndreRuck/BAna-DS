@@ -10,8 +10,10 @@ library(dlstats) #package to check download statistics of packages
 library(tree)
 library(randomForest)
 library(e1071)
+library(xgboost)
 
 library(MuMIn)
+
 
 #Data----
 setwd("~/GitHub/BAna-DS")
@@ -65,7 +67,7 @@ test_nNA <- ohieVariables_nNA[-index_nNA,]
 
 ohieVariables_DepnNA <- drop_na(ohieVariables, any_of("charge_total"))
 
-ohieVariables_mean <- 
+#ohieVariables_mean <- 
 
 
 
@@ -112,7 +114,7 @@ Sys.time()
  #"forany_ed_psychiatric_condition_or_substance_abuse"
 Sys.time()
 
-#model with highest AICc
+#model with lowest AICc
 m.lm_aic <- lm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
                  any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
                  any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + charge_food_assistance + 
@@ -137,6 +139,8 @@ rmse(test_nNA$charge_total, p.lm_it) #16649.42
 
 #Initial tree based methods----
 
+
+#
 #Single Tree
 m.tr <- tree(charge_total ~ ., train_nNA)
 
@@ -144,6 +148,8 @@ p.tr <- predict(m.tr, newdata = test_nNA)
 
 rmse(test_nNA$charge_total, p.tr) #[1] 17029.64
 
+
+#
 #Random forest
 m.fo <- randomForest(charge_total ~ ., train_nNA, ntree = 2000)
 
@@ -184,14 +190,110 @@ m.fo_it <- randomForest(charge_total ~ preperiod_any_visits + age + sex + any_ed
                 charge_temporary_assistance + sex:any_ed_headache + sex:preperiod_any_visits +
                 sex:age + sex:any_ed_visits + sex:any_ed_chronic_condition + sex:any_ed_injury +
                 sex:any_ed_back_pain, train_nNA)
-p.lm_fo <- predict(m.fo_it, newdata = test_nNA)
-rmse(test_nNA$charge_total, p.lm_fo) #[1] 16564.99
+p.fo_it <- predict(m.fo_it, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.fo_it) #[1] 16564.99
 #Result: the result was actually worse
 #improvements were not really to be expected, since due to their structure random forests should implicitly model
 #interactions, by themselves, fairly well
 
 
 
+#
+#Boosted trees
+
+#took the following tutorial as guidance: http://uc-r.github.io/gbm_regression
+
+#Initial model
+featuresBt <- as.matrix(select(ohieVariables_nNA, !c("charge_total")))
+set.seed(1111)
+m.bt <- xgb.cv(
+  data = featuresBt,
+  label = ohieVariables_nNA$charge_total,
+  nrounds = 1400,
+  nfold = 5,    #one is for testing the rest is used for training
+  objective = "reg:squarederror",  # for regression models, linear is depreciated
+  verbose = 0   # silent,
+)
+
+#number of trees that minimize error
+m.bt$evaluation_log %>%
+  dplyr::summarise(
+    ntrees.train = which(train_rmse_mean == min(train_rmse_mean))[1],
+    rmse.train   = min(train_rmse_mean),
+    ntrees.test  = which(test_rmse_mean == min(test_rmse_mean))[1],
+    rmse.test   = min(test_rmse_mean),
+  )
+#  ntrees.train rmse.train ntrees.test rmse.test
+#          1400   3088.657           7  16189.93
+
+# plot error vs number trees
+ggplot(m.bt$evaluation_log) +
+  geom_line(aes(iter, train_rmse_mean), color = "red") +
+  geom_line(aes(iter, test_rmse_mean), color = "blue")
+
+
+#Aci model
+featuresBt_aci <- as.matrix(select(ohieVariables_nNA, !c("any_ed_psychiatric_condition_or_substance_abuse", "food_assistance",
+                                                      "temporary_assistance", "charge_total")))
+set.seed(1111)
+m.bt_aci <- xgb.cv(
+  data = featuresBt_aci,
+  label = ohieVariables_nNA$charge_total,
+  nrounds = 1400,
+  nfold = 5,    #one is for testing the rest is used for training
+  objective = "reg:squarederror",  # for regression models, linear is depreciated
+  verbose = 0   # silent,
+)
+#test_rmse_std: 1st iter: 1242.8520; 1400th iter: 658.1926
+
+#number of trees that minimize error
+m.bt_aci$evaluation_log %>%
+  dplyr::summarise(
+    ntrees.train = which(train_rmse_mean == min(train_rmse_mean))[1],
+    rmse.train   = min(train_rmse_mean),
+    ntrees.test  = which(test_rmse_mean == min(test_rmse_mean))[1],
+    rmse.test   = min(test_rmse_mean),
+  )
+#   ntrees.train rmse.train ntrees.test rmse.test
+#           1400   3679.516           6  16121.63
+# ln-aci optimized versions performs slightly better
+
+# plot error vs number trees
+ggplot(m.bt_aci$evaluation_log) +
+  geom_line(aes(iter, train_rmse_mean), color = "red") +
+  geom_line(aes(iter, test_rmse_mean), color = "blue")
+#Result: Whilst the training rmse decreases continously with the number iterations,
+ #the test rmse actually increases after reaching its minimum after merely 6 trees
+ #hyothesis: the data is very noisy and the model is overfitting
+ #see: https://www.cs.cmu.edu/afs/cs/project/jair/pub/volume11/opitz99a-html/node14.html
+
+#Varying tree depth
+ #since overfitting seems to be a big problem, smaller trees might increase performance
+
+depthList_m.bt_aci <- vector(mode = "list", length = 8)
+for (i in 1:8)
+{
+  set.seed(1111)
+  depthList_m.bt_aci[i] <- xgb.cv(
+    data = featuresBt_aci,
+    label = ohieVariables_nNA$charge_total,
+    nrounds = 800,
+    nfold = 5,    #one is for testing the rest is used for training
+    objective = "reg:squarederror",  # for regression models, linear is depreciated
+    verbose = 0,   # silent,
+    max_depth = i
+  )
+}
+
+depthList_m.bt_aci[[1]] <- xgb.cv(
+  data = featuresBt_aci,
+  label = ohieVariables_nNA$charge_total,
+  nrounds = 800,
+  nfold = 5,    #one is for testing the rest is used for training
+  objective = "reg:squarederror",  # for regression models, linear is depreciated
+  verbose = 0)   # silent,
+
+depthList_m.bt_aci[[2]] <- lm(charge_total ~ ., train_nNA, na.action = "na.fail")
 
 #Support Vector Regression-----
 
