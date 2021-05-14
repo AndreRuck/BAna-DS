@@ -126,5 +126,3 @@ xxx <- select(xxx, !matches(c(#additional values to delete
 levels(xxx$sex) <- c("Male", "Female")
 
 saveRDS(yyy, "OHIE_Wrangled.RDS")
-
-#I guess still some rearranging to put in chronological order
