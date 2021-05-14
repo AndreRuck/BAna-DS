@@ -20,3 +20,5 @@ model_step_rds = predictions multi model regression save (step model)
 ui and server: 1. step genrating by visualization done. 2. making predictions based on the inputs is not finished yet.
 
 dredlm.rds & dredlm.RData = files containing the ACI scores of different ohie predictions model (calculations take forever so thats why they are saved there)
+
+ui & serber_1: main framework for the linear regression analysis done (if enough time, comparing different profil as an added value for the customer and fine tuning:icon, color)
