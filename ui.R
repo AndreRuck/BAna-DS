@@ -108,23 +108,24 @@ shinyUI(fluidPage(
                                          )
                                      )
                             ))),
-               tabPanel("Predict Expenses ",
+               tabPanel("Predict YOUR Expenses ",
                         tabsetPanel(
-                            tabPanel("General Questionnaire",
-                                     verticalLayout(
+                            tabPanel("Insurance Information",
+                                     br(),
+                                     sidebarLayout(
                                          sidebarPanel(
                                              radioButtons("gender_Input", "Choose your gender", 
                                                           c("Male" = "male",
                                                             "Female" = "female")
                                              ),
                                              numericInput("age_Input", "Enter your age", min=0, max=90,
-                                                          value=c(45)
+                                                          value=c(0)
                                              ),
                                              numericInput("weights_Input", "Enter your weights (kg)", min=40, max=150,
-                                                          value=c(75)
+                                                          value=c(0)
                                              ),
                                              numericInput("heights_Input", "Enter your heights (cm)", min=130, max=220,
-                                                          value=c(170)
+                                                          value=c(0)
                                              ),
                                              numericInput("children_Input", "How many children do you have", min = 0, max = 10,
                                                           value = c(1)
@@ -134,6 +135,30 @@ shinyUI(fluidPage(
                                                             "No" = "no")
                                              ),
                                              selectInput("region_Input", "Region", c("northwest", "northeast", "southeast", "southwest")
+                                             )),
+                                         mainPanel(
+                                             h1("Prediction"),
+                                             h3(textOutput("fit1")),
+                                             tableOutput("result"))
+                                         
+                                     )
+                            )
+                        )
+               ),
+               tabPanel("Optimize YOUR Expenses ",
+                        tabsetPanel(
+                            tabPanel("Register",
+                                     verticalLayout(
+                                         sidebarPanel(
+                                             radioButtons("Saluations_Input", "Dear", 
+                                                          c("Mr" = "yes",
+                                                            "Ms" = "no")
+                                             ),
+                                             textInput("Firstname_Input", "First name",
+                                                       value = ""
+                                             ),
+                                             textInput("Surname_Input", "Surname",
+                                                       value = ""
                                              ),
                                              numericInput("zip_Input", "ZIP", min = 00601, max = 99950,
                                                           value = ""
@@ -148,19 +173,57 @@ shinyUI(fluidPage(
                                                        value = ""
                                              ),
                                              numericInput("phone_Input", "Phone", min = 10000000, max = 100000000,
-                                                          value = "")),
-                                              actionButton("goButton2", "Predict", icon = icon("area-chart")),
-                                              br()
-                                         
-                                     )),
-                            tabPanel("Your Inputs ",
-                                     verticalLayout(
-                                         mainPanel(
-                                             tableOutput("result"),
-                                             tableOutput("prediction1")
+                                                          value = ""),
+                                             passwordInput("password", "Password:"),
+                                             actionButton("go", "Login"),
+                                             verbatimTextOutput("value")
+                                         ))
+                            ),
+                            tabPanel("Compare Expenses",
+                                     splitLayout(
+                                         sidebarPanel(
+                                             titlePanel("Profil 1"),
+                                             radioButtons("gender_Input", "Choose your sex", 
+                                                          c("male" = "male",
+                                                            "female" = "female")
+                                             ),
+                                             numericInput("age.Input", "Enter your age", min=0, max=90,
+                                                          value=c(0)
+                                             ),
+                                             numericInput("weights.Input", "Enter your weights (kg)", min=40, max=150,
+                                                          value=c(0)
+                                             ),
+                                             numericInput("heights.Input", "Enter your heights (cm)", min=130, max=220,
+                                                          value=c(0)
+                                             ),
+                                             numericInput("children.Input", "Children", min = 0, max = 10,
+                                                          value = c(0)
+                                             ),
+                                             radioButtons("smoker.Input", "Do you smoke?", 
+                                                          c("Yes" = "yes",
+                                                            "No" = "no")
+                                             )),
+                                         sidebarPanel(
+                                             titlePanel("Profil 2"),
+                                             radioButtons("gender__Input", "Choose your sex", 
+                                                          c("male" = "male",
+                                                            "female" = "female")
+                                             ),
+                                             numericInput("age__Input", "Enter your age", min=0, max=90,
+                                                          value=c(0)
+                                             ),
+                                             numericInput("weights__Input", "Enter your weights (kg)", min=40, max=150,
+                                                          value=c(0)
+                                             ),
+                                             numericInput("heights__Input", "Enter your heights (cm)", min=130, max=220,
+                                                          value=c(0)
+                                             ),
+                                             numericInput("children__Input", "Children", min = 0, max = 10,
+                                                          value = c(0)
+                                             ),
+                                             radioButtons("smoker__Input", "Do you smoke?", 
+                                                          c("Yes" = "yes",
+                                                            "No" = "no"))
                                          )
-                                     ),
-                            )
-                        )
-               )
-    )))
+                                         
+                                     )))))))
