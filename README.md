@@ -7,6 +7,8 @@ otherwise simply use another branch
 
 # Info on the current files in the repo: (please add your explanation if you add a file)
 
+OHIE_features = guide for shiny implementation: an excel document explaining all the variables used in the ohie model
+
 OHIE_wrangle = the r script containing all data wrangling on the OHIE dataset
 
 OHIE_wrangled.RDS = the cleaned dataframe. This forms the base of our OHIE analysis.
