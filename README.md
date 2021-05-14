@@ -18,3 +18,5 @@ OHIE_analysis.R = forecasting models on OHIE dataset, which is imported from OHI
 model_step_rds = predictions multi model regression save (step model)
 
 ui and server: 1. step genrating by visualization done. 2. making predictions based on the inputs is not finished yet.
+
+dredlm.rds & dredlm.RData = files containing the ACI scores of different ohie predictions model (calculations take forever so thats why they are saved there)
