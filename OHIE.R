@@ -15,7 +15,7 @@ oregonhie_survey6m_vars <- read_dta(file = "oregonhie_survey6m_vars.dta")
 OHIE_data_for_analysis <- read_dta("~/Documents/Business Analytics/Data/OHIE_data_for_analysis.dta")
 
 #filter all datasets out that we don't want
-OHIE_data_filter <- OHIE_data_for_analysis[-unique(c(which(colnames(OHIE_data_for_analysis)%in%colnames(oregonhie_survey12m_vars)), 
+OHIE_data_filter <- OHIE_data_for_analysis[-unique(c(which(colnames(OHIE_data_for_analysis)%in%colnames(oregonhie_survey12m_vars)),
                                               which(colnames(OHIE_data_for_analysis)%in%colnames(oregonhie_survey6m_vars)),
                                               which(colnames(OHIE_data_for_analysis)%in%colnames(oregonhie_survey0m_vars))))]
 OHIE_data_filter<- bind_cols(OHIE_data_for_analysis[1], OHIE_data_filter)
@@ -65,65 +65,10 @@ OHIE_data_filter <- OHIE_data_filter[-index]
 joineddf <- full_join(select(oregonhie_descritpive_vars, !matches(descriptive_var_del)),select(oregonhie_ed_vars, !matches(ed_vars_del)), by = "person_id")
 joineddf <- full_join(joineddf, select(oregonhie_inperson_vars, !matches(inperson_vars_del)), by = "person_id")
 joineddf <- full_join(joineddf, select(oregonhie_patterns_vars, !matches(patterns_vars_del)), by = "person_id")
+
 joineddf <- full_join(joineddf, select(oregonhie_stateprograms_vars, !matches(stateprogram_vars_del)), by = "person_id")
 
-joineddf <- select(joineddf, !contains("_cens_"))
-###deleting values with high no. of NA's, they might still be relevant.
-joineddf <- purrr::discard(joineddf, ~sum(is.na(.x))/length(.x)* 100 >= 69)
-#x <- which(colnames(joineddf) %in% colnames(yyy))
-#colnames(joineddf[-x])
+joineddf <- full_join(joineddf, select(oregonhie_stateprograms_vars, !matches(stateprogram_vars_del)), by = "person_id")
 
-
-#############combine pre and after.
-#### ed = emergency department
-#
-#aggregate variables that have both a pre randomization and after randomization value through an or gate. And where fitting +
-xxx <- mutate(joineddf, 
-              age = 2008-birthyear_list.x,
-              sex = as.factor(female_list.x),
-              #here start ed values
-              any_ed_visits = any_visit_pre_ed|any_visit_ed, 
-              any_ed_chronic_condition = any_chron_pre_ed|any_chron_ed, 
-              any_ed_injury = any_inj_pre_ed|any_inj_ed, 
-              any_ed_skin_condition = any_skin_pre_ed|any_skin_ed, 
-              any_ed_abdominal_pain = any_abdo_pre_ed|any_abdo_ed, 
-              any_ed_back_pain = any_back_pre_ed|any_back_ed,
-              any_ed_heart_or_chest_pain = any_heart_pre_ed|any_heart_ed,
-              any_ed_headache = any_head_pre_ed|any_head_ed,
-              any_ed_depression = any_depres_pre_ed|any_depres_ed,
-              any_ed_psychiatric_condition_or_substance_abuse = any_psysub_pre_ed|any_psysub_ed,
-              charge_total = charg_tot_pre_ed+charg_tot_ed, #during time span pre and after +
-              ed_charge_total = ed_charg_tot_pre_ed+ed_charg_tot_ed, #+
-              #gov assistance
-              food_assistance = snap_ever_prenotify07|snap_ever_presurvey12m|snap_ever_matchn_30sep2009|snap_ever_firstn_survey12m, #SNAP is a government programn in the US
-              charge_food_assistance = snap_tot_hh_prenotify07+snap_tot_hh_presurvey12m+snap_tot_hh_30sep2009+snap_tot_hh_firstn_survey12m,
-              temporary_assistance = tanf_ever_prenotify07|tanf_ever_presurvey12m|tanf_ever_matchn_30sep2009|tanf_ever_firstn_survey12m, #TANF is a government programn in the US
-              charge_temporary_assistance = tanf_tot_hh_prenotify07+tanf_tot_hh_presurvey12m+tanf_tot_hh_30sep2009+tanf_tot_hh_firstn_survey12m
-)
-
-
-
-
-#delete aggregated columns
-yyy <- select(xxx, !matches(c(#additional values to delete
-                              "household_id", "birthyear_list.y", "female_list.y", "english_list", #additional values to delete
-                              "birthyear_list.x", "female_list.x", #basic transformation
-            
-                              #ed transformation
-                              "any_visit_pre_ed","any_visit_ed","any_chron_pre_ed", "any_chron_ed", 
-                              "any_inj_pre_ed", "any_inj_ed", "any_skin_pre_ed", "any_skin_ed",
-                              "any_abdo_pre_ed", "any_abdo_ed", "any_back_pre_ed", "any_back_ed",
-                              "any_heart_pre_ed", "any_heart_ed", "any_head_pre_ed", "any_head_ed",
-                              "any_depres_pre_ed", "any_depres_ed", "any_psysub_pre_ed","any_psysub_ed",
-                              "charg_tot_pre_ed", "charg_tot_ed", "ed_charg_tot_pre_ed", "ed_charg_tot_ed",
-                              
-                              "snap_ever_prenotify07", "snap_ever_presurvey12m", "snap_ever_matchn_30sep2009", "snap_ever_firstn_survey12m",
-                              "snap_tot_hh_prenotify07", "snap_tot_hh_presurvey12m", "snap_tot_hh_30sep2009", "snap_tot_hh_firstn_survey12m",
-                              "tanf_ever_prenotify07", "tanf_ever_presurvey12m", "tanf_ever_matchn_30sep2009", "tanf_ever_firstn_survey12m",
-                              "tanf_tot_hh_prenotify07", "tanf_tot_hh_presurvey12m", "tanf_tot_hh_30sep2009", "tanf_tot_hh_firstn_survey12m")))
-
-levels(yyy$sex) <- c("Male", "Female")
-
-saveRDS(yyy, "OHIE_Wrangled.RDS")
-
-#I guess still some rearranging to put in chronological order
+  #xxx <- mutate(joineddf, number_ed_visits = num_visit_pre_cens_ed + num_visit_cens_ed)
+joined <- select(joineddf, matches("any_visit_pre_ed","any_visit_ed", "num_visit_pre_cens_ed", "num_visit_cens_ed",""))
