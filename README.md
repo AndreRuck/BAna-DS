@@ -13,7 +13,7 @@ OHIE_wrangle = the r script containing all data wrangling on the OHIE dataset
 
 OHIE_wrangled.RDS = the cleaned dataframe. This forms the base of our OHIE analysis. (24 variables)
 
-OHIE_Fial_Selection.RDS = cleaned dataframe without unique identifier's and statistically unimpactful variables. (15 variables)
+OHIE_Final_Selection.RDS = cleaned dataframe without unique identifier's and statistically unimpactful variables. (15 variables)
 
 OHIE_featureSelection = depreciated OHIE data wrangling script
 
