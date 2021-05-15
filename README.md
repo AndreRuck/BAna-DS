@@ -26,3 +26,5 @@ ui and server: 1. step genrating by visualization done. 2. making predictions ba
 dredlm.rds & dredlm.RData = files containing the ACI scores of different ohie predictions model (calculations take forever so thats why they are saved there)
 
 ui & serber_1: main framework for the linear regression analysis done (if enough time, comparing different profil as an added value for the customer and fine tuning:icon, color)
+
+ohie shiny app: ui/server prototyp for analysis. additionally to this folder new csv file without NA's value for the vizualization. 
