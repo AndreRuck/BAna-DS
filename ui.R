@@ -1,11 +1,19 @@
 library(shiny)
 library(DT)
+library(bslib)
 
 insurancecols=read.csv("insurance.csv")
 insurancecols=colnames(insurancecols)
 
 shinyUI(fluidPage(
     navbarPage("Preddly",
+               theme = bs_theme(version = 4,
+                                bg = "#FFFFFF",
+                                fg = "#0A5192",
+                                primary = "#85878C",
+                                base_font = font_google("Oswald"),
+                                bootswatch = "minty"
+                                ),
                tabPanel("Explore Expenses",
                         tabsetPanel(
                             tabPanel("Easy",
@@ -87,7 +95,7 @@ shinyUI(fluidPage(
                                                          value=c(0,8)
                                              ),
                                              sliderInput("expensesInputtt", "Expenses", min=1000, max=70000,
-                                                         value=c(0,70000)
+                                                         value=c(1000,70000)
                                              ),
                                              checkboxGroupInput("genderInputtt", "Gender",
                                                                 choiceNames = list("male", "female"),
@@ -224,6 +232,28 @@ shinyUI(fluidPage(
                                              radioButtons("smoker__Input", "Do you smoke?", 
                                                           c("Yes" = "yes",
                                                             "No" = "no"))
+                                         ),
+                                         mainPanel(
+                                           wellPanel("Recommendation for healthy habits from our Partners"),
+                                           br(),
+                                           tags$a(href="https://blog.fitbit.com/", img(src='fitbit-logo2.png', height = "50%", width = "50%", align = "center")),
+                                           br(),
+                                           tags$a(href="https://www.eatingwell.com/recipes/", img(src = 'eatingwell-logo.jpg', height = "50%", width = "50%", align = "center")
+                                           ),
+                                           br(),
+                                           tags$a(href="https://smokefreeapp.com/",img(src='smoke-logo.png', height = "50%", width = "50%", align = "center")
+                                           ),
+                                           br(),
+                                           tags$a(href="https://kidshealth.org/", img(src = 'kidshealth-logo.jpg' , height = "50%", width = "50%", align = "center")
+                                           ),
+                                           br(),
+                                           tags$a(href="https://www.gaiam.com/", img(src = 'gaiam-logo.jpg' , height = "50%", width = "50%", align = "center")
+                                           ),
+                                           br(),
+                                           tags$a(href="https://www.headspace.com/mindfulness/mindful-eating", img(src = 'headspace-logo.jpg' , height = "50%", width = "50%", align = "center")
+                                           ),
+                                           
+                                           
                                          )
                                          
                                      )))))))
