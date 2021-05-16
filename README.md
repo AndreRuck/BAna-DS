@@ -28,3 +28,5 @@ dredlm.rds & dredlm.RData = files containing the ACI scores of different ohie pr
 ui & serber_1: main framework for the linear regression analysis done (if enough time, comparing different profil as an added value for the customer and fine tuning:icon, color)
 
 ohie shiny app: ui/server prototyp for analysis. additionally to this folder new csv file without NA's value for the vizualization. 
+
+xb_predictions: UI&server with predictions model with a bug. is in process.
