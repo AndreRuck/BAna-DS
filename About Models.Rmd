@@ -47,13 +47,16 @@ Mutliple Linear Regression
 ```
 
 ## Simple Tree Regression
-
+```{}
 ## Random Forest Regression
 
 ## Gradient boosting Regression
 
 ## Artificial Neural Network Regression
-```{r Neural Networks presentation}
+Tried out many different parameters with different levels of complexity.
+A Neural Network with 1 Hidden Layer and 1 Neuron, using a softplus activation function.
+```{r nn1 Neural Networks presentation}
+
 plot(nn2, rep = "best")
 plot(nn4, rep = "best")
 ```
