@@ -1,6 +1,6 @@
 ---
 title: "About Models"
-author: "Ryu Pape"
+author: "Zoran Dobrosavljevic, Thibaud Mottier, Ryu Pape, André Ruckdäschel"
 date: "5/17/2021"
 output: ioslides_presentation
 ---
@@ -16,8 +16,7 @@ library(caret)
 ## Data wrangling/pre-processing
 Only applies to OHIE dataset
 ```{r load file and models for reporting, include=FALSE}
-load("nn2.Rdata")
-load("nn4.Rdata")
+load("NN.Rdata")
 ```
 ## Content Library
 - Insurance.csv
@@ -30,7 +29,6 @@ load("nn4.Rdata")
   - Artificial Neural Networks Regression
 
 # insurance.csv
-Insurance
 
 ## Underlying Algorithm behind predictions
 Mutliple Linear Regression
@@ -55,15 +53,31 @@ Mutliple Linear Regression
 
 ## Artificial Neural Network Regression
 A Neural Network with 1 Hidden Layer and 1 Neuron, using a softplus activation function.
-```{r nn1 Neural Networks presentation}
+```{r nn1 Neural Network}
 plot(nn2, rep = "best")
 ```
+
 ## Artificial Neural Network Regression
 A Neural Network with 9 Hidden Layers and 1 Neuron, using a softplus activation function
-```{r nn1 Neural Networks presentation}
+```{r nn4 Neural Network}
 plot(nn4, rep = "best")
 ```
+  
+  
+## Artificial Neural Network Regression
+nn1: 1 Hidden Layer, 1 Neuron, logistic activation function  
+nn2: 1 Hidden Layer, 1 Neuron, softplus activation function  
+nn3: 9 Hidden Layer, 1 Neuron, logistic activation function  
+nn4: 9 Hidden Layer, 1 Neuron, softplus activation function  
+<br />
+For our Neural Network the graphic on the next slide shows that the more complex our NN, the worse it .  
+NN is having a really hard time working through the sparse underlying dataset. 
+
+
 ## Artificial Neural Network Regression
 ```{r comparing different Models}
-
+Regression_nn_Errors %>% 
+  ggplot(aes(Network, SSE, fill = DataSet)) + 
+  geom_col(position = "dodge") + 
+  ggtitle("Regression ANN's SSE")
 ```
