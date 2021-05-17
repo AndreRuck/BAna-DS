@@ -372,6 +372,21 @@ names(depthList_evaluation_nEDsp) <- c("Tree Depth", "ntrees.train", "rmse.train
  #it performs best at 29 iterations with a test-rmse of 15940.39
 
 
+#Recalculating the currently best performing model to export it
+featuresBt_aci <- as.matrix(select(ohieVariables_nNA, !c("any_ed_psychiatric_condition_or_substance_abuse", "food_assistance",
+                                                         "temporary_assistance", "charge_total")))
+set.seed(1111)
+m.bt_3d <- xgb.cv(
+  data = featuresBt_aci,
+  label = ohieVariables_nNA$charge_total,
+  nrounds = 100,
+  nfold = 5,    #one is for testing the rest is used for training
+  objective = "reg:squarederror",  # for regression models, linear is depreciated
+  verbose = 0,   # silent,
+  max_depth = 3)
+saveRDS(m.bt_3d, file="~/GitHub/BAna-DS/ohieBoostingModel.RDS")
+
+
 #Possible further algorithms----
  #support vecor machiene <- mainly used for classification problems, but regression can also be done
   #do not yet know about usefullness in this setting
