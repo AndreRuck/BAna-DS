@@ -1,5 +1,5 @@
 library(shiny)
-library(DT)
+library(data.table)
 
 options(scipen=999)
 ohie=fread("ohie.plot.csv")

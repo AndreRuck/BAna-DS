@@ -1,0 +1,40 @@
+---
+title: "About Models"
+author: "Ryu Pape"
+date: "5/17/2021"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(neuralnet)
+library(caret)
+```
+
+
+## Data wrangling/pre-processing
+Only applies to OHIE dataset
+```{r load file and models for reporting, include=FALSE}
+load("nn2.Rdata")
+load("nn4.Rdata")
+```
+## Slide with Bullets
+
+- Insurance.csv
+  - Multiple Linear Regression
+- OHIE
+- Bullet 3
+
+## Slide with R Output
+
+```{r cars, echo = TRUE}
+summary(cars)
+```
+
+## Slide with Plot
+
+```{r pressure}
+plot(pressure)
+```
+

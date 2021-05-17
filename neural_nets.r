@@ -2,7 +2,8 @@ library(tidyverse)
 library(neuralnet)
 library(caret)
 library(GGally)
-
+library(bslib)
+library(DT)
 data <- readRDS("OHIE_Final_Selection.RDS")
 
 # imputation
@@ -129,3 +130,6 @@ Regression_nn_Errors %>%
 
 #the more complex our NN , the worse it actually gets.
 #NN is having a really hard time working through the sparse underlying dataset. 
+save(nn2, file="nn2.Rdata")
+save(nn4, file="nn4.Rdata")
+
