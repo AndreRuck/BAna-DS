@@ -21,7 +21,7 @@ ohie <- readRDS("OHIE_Wrangled.RDS")
 
 
 
-#Variables----
+#Variables
 
 #dependent variable: charge_total <- includes all charges and food assistance is not paid for by insurance
 formula <- "charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
@@ -39,7 +39,7 @@ ohieVariables <- ohie %>%
 ohieVariables$sex <- as.numeric(ohieVariables$sex=="Female")
 
 
-#Creating train and test data with different imputation methods----
+#Creating train and test data with different imputation methods
 
 #no imputation
 set.seed(1111)
@@ -71,6 +71,7 @@ ohieVariables_DepnNA <- drop_na(ohieVariables, any_of("charge_total"))
 
 
 
+
 #Exploration----
 
 cor_ohieVariables_nNA <- cor(ohieVariables_nNA)
@@ -79,7 +80,9 @@ corplot_ohieVariables_nNA <- corrplot(corr = cor_ohieVariables_nNA)
 
 
 
-#Initial linear regression----
+#Linear regression----
+
+#Initial model
 m.lm <- lm(charge_total ~ ., train_nNA, na.action = "na.fail")
 #Multiple R-squared:  0.2681,	Adjusted R-squared:  0.2672     pretty bad...
 p.lm <- predict.lm(m.lm, newdata = test_nNA)
@@ -137,7 +140,32 @@ rmse(test_nNA$charge_total, p.lm_it) #16649.42
 #Result: Interaction terms with variable sex could improve the result a bit, but the model is still a bit worse than
  #the random forest model
 
-#Initial tree based methods----
+#Support Vector Regression-----
+
+#Initial model
+m.sv <- svm(charge_total ~ ., train_nNA)
+p.sv <- predict(m.sv, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.sv) #[1] 20437.4
+
+#Logical features removed if both logical and numeric is available
+m.sv_nn <- svm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
+                 any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
+                 any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + 
+                 any_ed_psychiatric_condition_or_substance_abuse + food_assistance + 
+                 temporary_assistance, train_nNA)
+p.sv_nn <- predict(m.sv_nn, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.sv_nn) #[1] 17439.04
+
+#features that were used in the model with the highest AIC in lm
+m.sv_aic <- svm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
+                  any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
+                  any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + charge_food_assistance + 
+                  charge_temporary_assistance, train_nNA)
+p.sv_aic <- predict(m.sv_aic, newdata = test_nNA)
+rmse(test_nNA$charge_total, p.sv_aic) #[1] 17409.03
+
+
+#Tree based methods----
 
 
 #
@@ -270,11 +298,11 @@ ggplot(m.bt_aci$evaluation_log) +
 #Varying tree depth
  #since overfitting seems to be a big problem, smaller trees might increase performance
 
-depthList_m.bt_aci <- vector(mode = "list", length = 8)
-for (i in 1:8)
+depthList_m.bt_aci <- vector(mode = "list", length = 9)
+for (i in 1:9)
 {
   set.seed(1111)
-  depthList_m.bt_aci[i] <- xgb.cv(
+  depthList_m.bt_aci[[i]] <- xgb.cv(
     data = featuresBt_aci,
     label = ohieVariables_nNA$charge_total,
     nrounds = 800,
@@ -285,39 +313,78 @@ for (i in 1:8)
   )
 }
 
-depthList_m.bt_aci[[1]] <- xgb.cv(
+depthList_evaluation <- data.frame(matrix(data = NA, nrow = 9, ncol = 4))
+for (i in 1:9)
+{
+  depthList_evaluation[i,] <- depthList_m.bt_aci[[i]]$evaluation_log %>%
+    dplyr::summarise(
+      ntrees.train = which(train_rmse_mean == min(train_rmse_mean))[1],
+      rmse.train   = min(train_rmse_mean),
+      ntrees.test  = which(test_rmse_mean == min(test_rmse_mean))[1],
+      rmse.test   = min(test_rmse_mean),
+    )
+}
+depthList_evaluation <- cbind(c(1:9), depthList_evaluation)
+names(depthList_evaluation) <- c("Tree Depth", "ntrees.train", "rmse.train", "ntrees.test", "rmse.test")
+#Results: The best performing model has depth of only 3
+ #it performs best at 29 iterations with a test-rmse of 15940.39
+
+#Could theoretically add a visualisation of all error rates <- worth it ??
+
+
+#
+#Testing performance of model without the additional ed_visit specifics
+featuresBt_nEDsp <- as.matrix(select(ohieVariables_nNA, !c("any_ed_psychiatric_condition_or_substance_abuse", "food_assistance",
+                                                         "temporary_assistance", "charge_total", "any_ed_chronic_condition", "any_ed_injury",                                 
+                                                         "any_ed_skin_condition", "any_ed_abdominal_pain", "any_ed_back_pain",
+                                                         "any_ed_heart_or_chest_pain", "any_ed_headache", "any_ed_depression")))
+Sys.time()
+depthList_m.bt_nEDsp <- vector(mode = "list", length = 9)
+for (i in 1:9)
+{
+  set.seed(1111)
+  depthList_m.bt_nEDsp[[i]] <- xgb.cv(
+    data = featuresBt_aci,
+    label = ohieVariables_nNA$charge_total,
+    nrounds = 800,
+    nfold = 5,    #one is for testing the rest is used for training
+    objective = "reg:squarederror",  # for regression models, linear is depreciated
+    verbose = 0,   # silent,
+    max_depth = i
+  )
+}
+Sys.time()
+
+depthList_evaluation_nEDsp <- data.frame(matrix(data = NA, nrow = 9, ncol = 4))
+for (i in 1:9)
+{
+  depthList_evaluation_nEDsp[i,] <- depthList_m.bt__nEDsp[[i]]$evaluation_log %>%
+    dplyr::summarise(
+      ntrees.train = which(train_rmse_mean == min(train_rmse_mean))[1],
+      rmse.train   = min(train_rmse_mean),
+      ntrees.test  = which(test_rmse_mean == min(test_rmse_mean))[1],
+      rmse.test   = min(test_rmse_mean),
+    )
+}
+depthList_evaluation_nEDsp <- cbind(c(1:9), depthList_evaluation_nEDsp)
+names(depthList_evaluation_nEDsp) <- c("Tree Depth", "ntrees.train", "rmse.train", "ntrees.test", "rmse.test")
+#Results: almost the same result as before
+ #it performs best at 29 iterations with a test-rmse of 15940.39
+
+
+#Recalculating the currently best performing model to export it
+featuresBt_aci <- as.matrix(select(ohieVariables_nNA, !c("any_ed_psychiatric_condition_or_substance_abuse", "food_assistance",
+                                                         "temporary_assistance", "charge_total")))
+set.seed(1111)
+m.bt_3d <- xgb.cv(
   data = featuresBt_aci,
   label = ohieVariables_nNA$charge_total,
-  nrounds = 800,
+  nrounds = 100,
   nfold = 5,    #one is for testing the rest is used for training
   objective = "reg:squarederror",  # for regression models, linear is depreciated
-  verbose = 0)   # silent,
-
-depthList_m.bt_aci[[2]] <- lm(charge_total ~ ., train_nNA, na.action = "na.fail")
-
-#Support Vector Regression-----
-
-#Initial model
-m.sv <- svm(charge_total ~ ., train_nNA)
-p.sv <- predict(m.sv, newdata = test_nNA)
-rmse(test_nNA$charge_total, p.sv) #[1] 20437.4
-
-#Logical features removed if both logical and numeric is available
-m.sv_nn <- svm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
-                 any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
-                 any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + 
-                 any_ed_psychiatric_condition_or_substance_abuse + food_assistance + 
-                 temporary_assistance, train_nNA)
-p.sv_nn <- predict(m.sv_nn, newdata = test_nNA)
-rmse(test_nNA$charge_total, p.sv_nn) #[1] 17439.04
-
-#features that were used in the model with the highest AIC in lm
-m.sv_aic <- svm(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
-                           any_ed_injury + any_ed_skin_condition + any_ed_abdominal_pain + any_ed_back_pain + 
-                           any_ed_heart_or_chest_pain + any_ed_headache + any_ed_depression + charge_food_assistance + 
-                           charge_temporary_assistance, train_nNA)
-p.sv_aic <- predict(m.sv_aic, newdata = test_nNA)
-rmse(test_nNA$charge_total, p.sv_aic) #[1] 17409.03
+  verbose = 0,   # silent,
+  max_depth = 3)
+saveRDS(m.bt_3d, file="~/GitHub/BAna-DS/ohieBoostingModel.RDS")
 
 
 #Possible further algorithms----
