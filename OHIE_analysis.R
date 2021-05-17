@@ -386,6 +386,29 @@ m.bt_3d <- xgb.cv(
   max_depth = 3)
 saveRDS(m.bt_3d, file="~/GitHub/BAna-DS/ohieBoostingModel.RDS")
 
+trainBt_aci <- as.matrix(select(train_nNA, !c("any_ed_psychiatric_condition_or_substance_abuse", "food_assistance",
+                                                         "temporary_assistance", "charge_total")))
+testBt_aci <- as.matrix(select(test_nNA, !c("any_ed_psychiatric_condition_or_substance_abuse", "food_assistance",
+                                              "temporary_assistance", "charge_total")))
+set.seed(1113)
+m.bt_3d.2 <- xgboost(
+  data = trainBt_aci,
+  label = train_nNA$charge_total,
+  nrounds = 29,
+  #nfold = 5,    #one is for testing the rest is used for training
+  objective = "reg:squarederror",  # for regression models, linear is depreciated
+  verbose = 0,   # silent,
+  max_depth = 3)
+
+pr.bt_3d.2 <- predict(m.bt_3d.2, newdata = testBt_aci)
+
+rmse(test_nNA$charge_total, pr.bt_3d.2) #[1] 16519.78 #why????
+
+
+#create object of gradient boosting that can be used with predict()
+#scale the charge variable into one year beforehand
+
+
 
 #Possible further algorithms----
  #support vecor machiene <- mainly used for classification problems, but regression can also be done
