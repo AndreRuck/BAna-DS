@@ -24,17 +24,36 @@ load("nn4.Rdata")
 - Insurance.csv
   - Multiple Linear Regression
 - OHIE
-- Bullet 3
+  - Multiple Linear Regression
+  - Simple Tree Regression
+  - Random Forest Regression
+  - Gradient boosting Regression(best performing)
+  - Artificial Neural Networks Regression
 
-## Slide with R Output
+# insurance.csv
+Insurance
 
+## Underlying Algorithm behind predictions
+Mutliple Linear Regression
 ```{r cars, echo = TRUE}
-summary(cars)
-```
 
-## Slide with Plot
+```
+# OHIE_Final_Selection.RDS
+
+## Multiple Linear Regression
 
 ```{r pressure}
-plot(pressure)
+
 ```
 
+## Simple Tree Regression
+
+## Random Forest Regression
+
+## Gradient boosting Regression
+
+## Artificial Neural Network Regression
+```{r Neural Networks presentation}
+plot(nn2, rep = "best")
+plot(nn4, rep = "best")
+```
