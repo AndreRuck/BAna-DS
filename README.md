@@ -33,3 +33,5 @@ xb_predictions: UI&server with predictions model with a bug. is in process.
 
 prototype1. please to download the rf model and put it into your folder while you use the shiny app. as the xboost did not work yet, I used the rf. 
 --> to do: optimize the tab, make better comparison and then icons and color. of course adding xboost if it works. 
+
+prototype2: different way of tabs. provide simultanously both solution as a process. 
