@@ -58,5 +58,12 @@ A Neural Network with 1 Hidden Layer and 1 Neuron, using a softplus activation f
 ```{r nn1 Neural Networks presentation}
 plot(nn2, rep = "best")
 ```
-
 ## Artificial Neural Network Regression
+A Neural Network with 9 Hidden Layers and 1 Neuron, using a softplus activation function
+```{r nn1 Neural Networks presentation}
+plot(nn4, rep = "best")
+```
+## Artificial Neural Network Regression
+```{r comparing different Models}
+
+```
