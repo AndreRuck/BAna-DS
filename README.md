@@ -37,3 +37,6 @@ prototype1. please to download the rf model and put it into your folder while yo
 prototype2: different way of tabs. provide simultanously both solution as a process. 
 
 prototype4: ready to provide (more or less). xbooost works finally :)
+
+Part_1_kaggle: Everything regarding kaggle (dataset, modelling, statistics)
+Part_3_shiny: All data and models for shiny implementation.
