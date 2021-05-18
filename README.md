@@ -35,3 +35,5 @@ prototype1. please to download the rf model and put it into your folder while yo
 --> to do: optimize the tab, make better comparison and then icons and color. of course adding xboost if it works. 
 
 prototype2: different way of tabs. provide simultanously both solution as a process. 
+
+prototype4: ready to provide (more or less). xbooost works finally :)
