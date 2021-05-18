@@ -75,8 +75,8 @@ Mutliple Linear Regression
 # OHIE_Final_Selection.RDS
 
 ## Multiple Linear Regression
-Linear regressions were used both us a tool for further feature selection, due to its low computational intensity, as well as a possible algorithm for our final data product.
-Within the undertaking of feature selection, some seemingly mutually-exclusive variables were chosen between through manual comparisons of different models. Subsequently the akaike information criterions for every possible variable combination were computed.
+Due to their low computational intensity, linear regressions were used as a tool for further feature selection as well as a possible algorithm for our final data product.
+Within the undertaking of feature selection, some seemingly mutually-exclusive variables were chosen through manual comparisons of different models. Subsequently the akaike information criterions for every possible variable combination were computed.
 The linear regression model with the highest AIC:
 ```{r pressure}
 ggplot(train_nNA, aes(y=charge_total)) +
@@ -84,7 +84,7 @@ ggplot(train_nNA, aes(y=charge_total)) +
   geom_smooth(method='lm', aes(x=age))
 ```
 ## Support Vector Regression
-To incorporate possible non-linear relationships better a support vectror regression was used to predict expenses. However, primarily due to the problem of overfitting, the initial model performed quite poorly. Whilst optimzuations, such as the stricter feature selection on the basis of AICs, resulted in significant improvements of model performance, the overall performance of support vector regressions continued to lag behind both linear and tree based approaches. Support vector based modelling was thus not further explored and optimized. Instead, our team focussed on tree based approaches.
+To incorporate possible non-linear relationships better, a support vectror regression was used to predict expenses. However, primarily due to the problem of overfitting, the initial model performed quite poorly. Whilst optimzuations, such as the stricter feature selection on the basis of AICs resulted in significant improvements to model performance, the overall performance of support vector regressions continued to lag behind both linear and tree based approaches. Support vector based modelling was thus not further explored and optimized. Instead, our team focused on tree based approaches.
 
 ## Simple Tree Regression
 Single trees can generally be expected to underperform tree based ensembler algorithms such as random forests or gradient boosting. We nevertheless elected to use a simple tree regression as a starting point for our analysis through tree based models, due to its low computation cost and ease of interpretability.
@@ -106,7 +106,7 @@ The single tree performed worse than the optimized linear regression, which appe
 ```
 
 ##Gradient Boosting Regressing utilizing decision trees
-In addition to the single tree and random forests, we implemented gradient boosting, as a third tree based method. Within this methods new trees are constructed using the information of already constructed trees, which differentiates it from random forests where additional tress are constructed independently of the already constructed trees. The problem of overfitting, was even more apparent under this algorithm.
+In addition to the single tree and random forests, we implemented gradient boosting, as a third tree based method. Within this method, new trees are constructed using the information of already constructed trees, which differentiates it from random forests where additional tress are constructed independently of the already constructed trees. The problem of overfitting, was even more apparent under this algorithm.
 The following graph of the in sample and out of sample error rates of the boosting model with the AIC optimized features illustrates the influence of overfitting especially clearly:
 ```{r}
 ggplot(m.bt_aci$evaluation_log, aes(x=iter)) +
@@ -116,7 +116,7 @@ ggplot(m.bt_aci$evaluation_log, aes(x=iter)) +
   annotate(geom = "text", x = 1000, y = 18000, label = "Out of sample error", color = "blue") +
   labs(title = "Comparing the evolution of in and out of sample error rates as the number of iterations increases")
 ```
-Subsequent of the tweaking of factors such as the number of iterations and the tree depth to avoid overfitting. the gradient boosting model turned out to be the best performing model, overall. It it thus the model, which our service utilizes.
+Subsequent of the tweaking of factors such as the number of iterations and the tree depth to avoid overfitting, the gradient boosting model turned out to be the best performing model overall. It it thus the model, which our service utilizes.
 ```{r}
 ggplot(depthList_evaluation, aes(x=treeDepth, y=rmse.test)) +
   geom_col() +
