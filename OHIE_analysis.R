@@ -171,11 +171,13 @@ rmse(test_nNA$charge_total, p.sv_aic) #[1] 17409.03
 #
 #Single Tree
 m.tr <- tree(charge_total ~ ., train_nNA)
-
 p.tr <- predict(m.tr, newdata = test_nNA)
-
 rmse(test_nNA$charge_total, p.tr) #[1] 17029.64
 
+
+
+plot(m.tr)
+text(m.tr, pretty = 0)
 
 #
 #Random forest
@@ -210,6 +212,8 @@ m.fo_aic <- randomForest(charge_total ~ preperiod_any_visits + age + sex + any_e
                  charge_temporary_assistance, train_nNA, na.action = "na.fail")
 p.fo_aic <- predict(m.fo_aic, newdata = test_nNA)
 rmse(test_nNA$charge_total, p.fo_aic) #[1] 16550.61
+#Visualization of error rate
+
 
 #adding esxplicit interactions, namely those interactions with sex that were found to be helpful in the lm model
 m.fo_it <- randomForest(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + any_ed_chronic_condition + 
@@ -285,11 +289,15 @@ m.bt_aci$evaluation_log %>%
 #   ntrees.train rmse.train ntrees.test rmse.test
 #           1400   3679.516           6  16121.63
 # ln-aci optimized versions performs slightly better
+saveRDS(m.bt_aci, file="~/GitHub/BAna-DS/mbt_aci.RDS")
 
 # plot error vs number trees
-ggplot(m.bt_aci$evaluation_log) +
-  geom_line(aes(iter, train_rmse_mean), color = "red") +
-  geom_line(aes(iter, test_rmse_mean), color = "blue")
+ggplot(m.bt_aci$evaluation_log, aes(x=iter)) +
+  geom_line(aes(y=train_rmse_mean), color = "red", show.legend = TRUE) +
+  geom_line(aes(y=test_rmse_mean), color = "blue", show.legend = TRUE) + 
+  annotate(geom = "text", x = 1000, y = 4800, label = "In sample error", color = "red") +
+  annotate(geom = "text", x = 1000, y = 18000, label = "Out of sample error", color = "blue")
+
 #Result: Whilst the training rmse decreases continously with the number iterations,
  #the test rmse actually increases after reaching its minimum after merely 6 trees
  #hyothesis: the data is very noisy and the model is overfitting
@@ -325,9 +333,16 @@ for (i in 1:9)
     )
 }
 depthList_evaluation <- cbind(c(1:9), depthList_evaluation)
-names(depthList_evaluation) <- c("Tree Depth", "ntrees.train", "rmse.train", "ntrees.test", "rmse.test")
+names(depthList_evaluation) <- c("treeDepth", "ntrees.train", "rmse.train", "ntrees.test", "rmse.test")
 #Results: The best performing model has depth of only 3
  #it performs best at 29 iterations with a test-rmse of 15940.39
+saveRDS(depthList_evaluation , file="~/GitHub/BAna-DS/depthList_evaluation.RDS")
+
+#Barplot to vizualize minimum error per depth
+ggplot(depthList_evaluation, aes(x=treeDepth, y=rmse.test)) +
+  geom_col() +
+  labs(title = "Smallest out of sample error per tree depth")
+  
 
 #Could theoretically add a visualisation of all error rates <- worth it ??
 
