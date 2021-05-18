@@ -14,8 +14,6 @@ library(tree)
 ```
 
 
-## Data wrangling/pre-processing
-Only applies to OHIE dataset
 ```{r load file and models for reporting, include=FALSE}
 #setwd("~/GitHub/BAna-DS")
 load("NN.Rdata")
@@ -54,6 +52,7 @@ index_nNA <- sample(x=c(1:length(ohieVariables_nNA$age)), size=trunc(length(ohie
 train_nNA <- ohieVariables_nNA[index_nNA,]
 test_nNA <- ohieVariables_nNA[-index_nNA,]
 ```
+
 ## Content Library
 - Insurance.csv
   - Multiple Linear Regression
@@ -106,7 +105,7 @@ The single tree performed worse than the optimized linear regression, which appe
 
 ```
 
-##Gradient Boosting Regressing utilizing decision trees
+## Gradient Boosting Regressing utilizing decision trees
 In addition to the single tree and random forests, we implemented gradient boosting, as a third tree based method. Within this method, new trees are constructed using the information of already constructed trees, which differentiates it from random forests where additional tress are constructed independently of the already constructed trees. The problem of overfitting, was even more apparent under this algorithm.
 The following graph of the in sample and out of sample error rates of the boosting model with the AIC optimized features illustrates the influence of overfitting especially clearly:
 ```{r}
