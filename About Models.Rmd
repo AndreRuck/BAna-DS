@@ -2,7 +2,7 @@
 title: "About Models"
 author: "Zoran Dobrosavljevic, Thibaud Mottier, Ryu Pape, André Ruckdäschel"
 date: "5/17/2021"
-output: ioslides_presentation
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -125,19 +125,17 @@ ggplot(depthList_evaluation, aes(x=treeDepth, y=rmse.test)) +
 
 
 ## Artificial Neural Network Regression
+because NN haven't been covered in class we'll quickly show what 
 A Neural Network with 1 Hidden Layer and 1 Neuron, using a softplus activation function.
 ```{r nn1 Neural Network}
 plot(nn2, rep = "best")
 ```
 
-## Artificial Neural Network Regression
 A Neural Network with 9 Hidden Layers and 1 Neuron, using a softplus activation function
 ```{r nn4 Neural Network}
 plot(nn4, rep = "best")
 ```
   
-  
-## Artificial Neural Network Regression
 nn1: 1 Hidden Layer, 1 Neuron, logistic activation function  
 nn2: 1 Hidden Layer, 1 Neuron, softplus activation function  
 nn3: 9 Hidden Layer, 1 Neuron, logistic activation function  
@@ -147,7 +145,7 @@ For our Neural Network the graphic on the next slide shows that the more complex
 NN is having a really hard time working through the sparse underlying dataset. 
 
 
-## Artificial Neural Network Regression
+
 ```{r comparing different Models}
 Regression_nn_Errors %>% 
   ggplot(aes(Network, SSE, fill = DataSet)) + 
