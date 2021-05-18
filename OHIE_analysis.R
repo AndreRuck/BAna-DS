@@ -343,7 +343,7 @@ ggplot(depthList_evaluation, aes(x=treeDepth, y=rmse.test)) +
   geom_col() +
   labs(title = "Smallest out of sample error per tree depth") +
   scale_x_continuous("Tree Depth", breaks = c(1:9), labels = as.character(c(1:9))) +
-  scale_y_continuous("Out of sample root squared error", limits = c(000, 1800))
+  coord_cartesian(ylim = c(1.5*10^4, 1.8*10^4))
 
 
 #Could theoretically add a visualisation of all error rates <- worth it ??
