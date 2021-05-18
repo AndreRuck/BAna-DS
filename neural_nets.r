@@ -1,9 +1,9 @@
 library(tidyverse)
 library(neuralnet)
 library(caret)
-library(GGally)
-library(bslib)
-library(DT)
+library(GGally) #for visualization of data. line 13. Computationally intensive.
+library(Metrics)
+
 data <- readRDS("OHIE_Final_Selection.RDS")
 
 # imputation
@@ -34,56 +34,64 @@ test <-data_standardized[-index,]
 
 ####### nn 1 #########
 #1 Hidden layer, 1 Neuron ANN, logistic activation, threshold 0.01
-#computation time ≈30sec
+#get rid of rep to not let model run multiple times.
+
 nn1 <- neuralnet(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + 
                    any_ed_chronic_condition + any_ed_injury + any_ed_skin_condition + 
                    any_ed_abdominal_pain + any_ed_back_pain + any_ed_heart_or_chest_pain + 
                    any_ed_headache + any_ed_depression + charge_food_assistance +
-                   charge_temporary_assistance, data = train, stepmax = 1e+07, threshold = 0.01,
-                 act.fct = "logistic", lifesign = "full")
+                   charge_temporary_assistance, data = train, stepmax = 2e+05, threshold = 0.01,
+                 act.fct = "logistic", lifesign = "full", rep = 10)
 plot(nn1, rep = 'best')
 
 #SSE of train
-nn1_Train_SSE <- sum((nn1$net.result - train[, 13])^2)/2
+nn1_Train_SSE <- sum((nn1$net.result[9] - train[, 13])^2)/2
 paste("SSE train: ", round(nn1_Train_SSE, 4))
 
 #SSE of test
-Test_nn2_output <- predict(nn1, test[, c(1:12, 14,15)])
+Test_nn1_output <- predict(nn1, test[, c(1:12, 14,15)])
 nn1_Test_SSE <- sum((Test_nn1_output - test[13])^2)/2
 paste("SSE test: ", round(nn1_Test_SSE, 4))
 ######### nn 2 #########
 #1 Hidden Layer, 1 Neuron ANN, sofplus activation, threshold 0.02
-#computation time ≈8.6min
 #activation function 
 #would love to use ReLU but non-differentiability not supported by neuralnet package.
 #softplus as smooth approximation of ReLU
 softplus <- function(x) log(1+exp(x))
+set.seed(555)
 nn2 <- neuralnet(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + 
                   any_ed_chronic_condition + any_ed_injury + any_ed_skin_condition + 
                   any_ed_abdominal_pain + any_ed_back_pain + any_ed_heart_or_chest_pain + 
                   any_ed_headache + any_ed_depression + charge_food_assistance + 
-                  charge_temporary_assistance, data = train, stepmax = 1e+07, threshold = 0.02,
+                  charge_temporary_assistance, data = train, stepmax = 2e+05, threshold = 0.01,
                  act.fct = softplus, lifesign = "full")
 plot(nn2, rep = 'best')
 
 #SSE of train
 nn2_Train_SSE <- sum((nn2$net.result - train[, 13])^2)/2
+
 paste("SSE train: ", round(nn2_Train_SSE, 4))
 
+str(Test_nn2_output)
+str(test[,13])
 #SSE of test
 Test_nn2_output <- predict(nn2, test[, c(1:12, 14,15)])
+nn2_Test_RMSE <- sum((test[,13]-mean(Test_nn2_output))^2)
+MyDeScaledData<-as.data.frame(Map(descale,test[,13],minvec[names(test[,13])],maxvec[names(test[,13])]))
+
+nn2_Test_RMSE <- Metrics::rmse(test$charge_total, Test_nn2_output)
 nn2_Test_SSE <- sum((Test_nn2_output - test[13])^2)/2
 paste("SSE test: ", round(nn2_Test_SSE, 4))
 
 
 ####### nn 3 #########
 #9 Hidden layer (aggregation of 2/3 of input layer.), 1 Neuron ANN, logistic activation, threshold 0.02
-#computation time ≈30sec
+set.seed(555)
 nn3 <- neuralnet(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + 
                   any_ed_chronic_condition + any_ed_injury + any_ed_skin_condition + 
                   any_ed_abdominal_pain + any_ed_back_pain + any_ed_heart_or_chest_pain + 
                   any_ed_headache + any_ed_depression + charge_food_assistance +
-                  charge_temporary_assistance, data = train, hidden = c(9,1), stepmax = 1e+07, threshold = 0.02,
+                  charge_temporary_assistance, data = train, hidden = c(9,1), stepmax = 2e+05, threshold = 0.01,
                   act.fct = "logistic", lifesign = "full")
 plot(nn3, rep = 'best')
 
@@ -98,17 +106,18 @@ paste("SSE test: ", round(nn3_Test_SSE, 4))
 
 ######## nn 4 #########
 #9 Hidden layer, 1 Neuron ANN, softplus activation, threshold = 0.02
-#computation time ≈9.72min
+set.seed(40)
 nn4 <- neuralnet(charge_total ~ preperiod_any_visits + age + sex + any_ed_visits + 
                   any_ed_chronic_condition + any_ed_injury + any_ed_skin_condition + 
                   any_ed_abdominal_pain + any_ed_back_pain + any_ed_heart_or_chest_pain + 
                   any_ed_headache + any_ed_depression + charge_food_assistance +
-                  charge_temporary_assistance, data = train, hidden = c(9,1), stepmax = 1e+07, threshold = 0.02,
+                  charge_temporary_assistance, data = train, hidden = c(9,1), stepmax = 2e+05, threshold = 0.01,
                   act.fct = softplus, lifesign = "full")
 plot(nn4, rep = 'best')
 
 #SSE of train
 nn4_Train_SSE <- sum((nn4$net.result - train[, 13])^2)/2
+
 paste("SSE train: ", round(nn4_Train_SSE, 4))
 
 #SSE of test
@@ -130,6 +139,7 @@ Regression_nn_Errors %>%
 
 #the more complex our NN , the worse it actually gets.
 #NN is having a really hard time working through the sparse underlying dataset. 
+save
 save(nn2, file="nn2.Rdata")
 save(nn4, file="nn4.Rdata")
 
