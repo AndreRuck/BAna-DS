@@ -81,7 +81,8 @@ The linear regression model with the highest AIC:
 ```{r pressure}
 ggplot(train_nNA, aes(y=charge_total)) +
   #geom_point() +
-  geom_smooth(method='lm', aes(x=age))
+  geom_smooth(method='lm', aes(x=age)) +
+  labs(title = "Exemplorary simple regression of expenses (charge total) on age")
 ```
 ## Support Vector Regression
 To incorporate possible non-linear relationships better, a support vectror regression was used to predict expenses. However, primarily due to the problem of overfitting, the initial model performed quite poorly. Whilst optimzuations, such as the stricter feature selection on the basis of AICs resulted in significant improvements to model performance, the overall performance of support vector regressions continued to lag behind both linear and tree based approaches. Support vector based modelling was thus not further explored and optimized. Instead, our team focused on tree based approaches.
