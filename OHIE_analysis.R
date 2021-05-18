@@ -399,10 +399,11 @@ m.bt_3d.2 <- xgboost(
   objective = "reg:squarederror",  # for regression models, linear is depreciated
   verbose = 0,   # silent,
   max_depth = 3)
-
 pr.bt_3d.2 <- predict(m.bt_3d.2, newdata = testBt_aci)
-
 rmse(test_nNA$charge_total, pr.bt_3d.2) #[1] 16519.78 #why????
+saveRDS(m.bt_3d.2, file="~/GitHub/BAna-DS/ohieBoostingModel.RDS")
+
+#matrix(unlist(), ncol = 14, byrow = TRUE)
 
 
 #create object of gradient boosting that can be used with predict()
