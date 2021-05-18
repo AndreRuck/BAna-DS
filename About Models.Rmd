@@ -11,12 +11,16 @@ library(tidyverse)
 library(neuralnet)
 library(caret)
 library(tree)
+library(factoextra)
+library(NbClust)
 ```
 
 
 ```{r load file and models for reporting, include=FALSE}
 #setwd("~/GitHub/BAna-DS")
 load("NN.Rdata")
+df.scale.test <- readRDS("df.scale.test.rds")
+result.cluster <- readRDS("result.cluster.rds")
 
 m.bt_aci <- readRDS("mbt_aci.RDS")
 depthList_evaluation <- readRDS("depthList_evaluation.RDS")
@@ -67,28 +71,39 @@ test_nNA <- ohieVariables_nNA[-index_nNA,]
 # insurance.csv
 
 ## Underlying Algorithm behind predictions
-Mutliple Linear Regression
-```{r cars, echo = TRUE}
+For the first data set we used Mutliple Linear Regression as our underlying algorithm.
 
+We used unsupervised learning (k nearest neighbour) to create an additional variable which increased R^2 from 0.75 to 0.90 and reduced RMSE by more than 60%
+
+```{r insurance, message=FALSE, warning=FALSE}
+set.seed(123)
+charges_K2.test <- kmeans(df.scale.test, centers = 3, nstart = 25)
+
+fviz_cluster(charges_K2.test, data = df.scale.test)
+result.cluster
 ```
+  
 # OHIE_Final_Selection.RDS
 
 ## Multiple Linear Regression
 Due to their low computational intensity, linear regressions were used as a tool for further feature selection as well as a possible algorithm for our final data product.
 Within the undertaking of feature selection, some seemingly mutually-exclusive variables were chosen through manual comparisons of different models. Subsequently the akaike information criterions for every possible variable combination were computed.
 The linear regression model with the highest AIC:
+  
 ```{r pressure}
 ggplot(train_nNA, aes(y=charge_total)) +
   #geom_point() +
   geom_smooth(method='lm', aes(x=age)) +
   labs(title = "Exemplorary simple regression of expenses (charge total) on age")
 ```
+  
 ## Support Vector Regression
 To incorporate possible non-linear relationships better, a support vectror regression was used to predict expenses. However, primarily due to the problem of overfitting, the initial model performed quite poorly. Whilst optimzuations, such as the stricter feature selection on the basis of AICs resulted in significant improvements to model performance, the overall performance of support vector regressions continued to lag behind both linear and tree based approaches. Support vector based modelling was thus not further explored and optimized. Instead, our team focused on tree based approaches.
 
 ## Simple Tree Regression
 Single trees can generally be expected to underperform tree based ensembler algorithms such as random forests or gradient boosting. We nevertheless elected to use a simple tree regression as a starting point for our analysis through tree based models, due to its low computation cost and ease of interpretability.
 This was the resulting regression tree:
+  
 ```{r, include=FALSE}
 m.tr <- tree(charge_total ~ ., train_nNA)
 p.tr <- predict(m.tr, newdata = test_nNA)
@@ -97,17 +112,16 @@ p.tr <- predict(m.tr, newdata = test_nNA)
 plot(m.tr)
 text(m.tr, pretty = 0)
 ```
+  
 Interestingly, this initial regression tree elected solely criteria from the users medical history as decision factors.
 
 ## Random Forest Regression
 The single tree performed worse than the optimized linear regression, which appeared to be largely due to problems of overfitting. Through the use of random forests, this performance could be enhanced significantly. The best performing random forest, namely the ranodom forest using the AIC optimized features within the linear gregression model, outperformed the linear regression with ACI optimized features and interaction terms with the variable sex.
-```{r}
-
-```
-
+  
 ## Gradient Boosting Regressing utilizing decision trees
 In addition to the single tree and random forests, we implemented gradient boosting, as a third tree based method. Within this method, new trees are constructed using the information of already constructed trees, which differentiates it from random forests where additional tress are constructed independently of the already constructed trees. The problem of overfitting, was even more apparent under this algorithm.
-The following graph of the in sample and out of sample error rates of the boosting model with the AIC optimized features illustrates the influence of overfitting especially clearly:
+The following graph of the in sample and out of sample error rates of the boosting model with the AIC optimized features illustrates the influence of overfitting especially clearly:  
+  
 ```{r}
 ggplot(m.bt_aci$evaluation_log, aes(x=iter)) +
   geom_line(aes(y=train_rmse_mean), color = "red", show.legend = TRUE) +
@@ -116,7 +130,9 @@ ggplot(m.bt_aci$evaluation_log, aes(x=iter)) +
   annotate(geom = "text", x = 1000, y = 18000, label = "Out of sample error", color = "blue") +
   labs(title = "Comparing the evolution of in and out of sample error rates as the number of iterations increases")
 ```
+  
 Subsequent of the tweaking of factors such as the number of iterations and the tree depth to avoid overfitting, the gradient boosting model turned out to be the best performing model overall. It it thus the model, which our service utilizes.
+  
 ```{r}
 ggplot(depthList_evaluation, aes(x=treeDepth, y=rmse.test)) +
   geom_col() +
@@ -127,8 +143,8 @@ ggplot(depthList_evaluation, aes(x=treeDepth, y=rmse.test)) +
 
 
 ## Artificial Neural Network Regression
-because NN haven't been covered in class we'll quickly show what 
-A Neural Network with 1 Hidden Layer and 1 Neuron, using a softplus activation function.
+because NN haven't been covered in class we'll quickly show what a NN looks like.
+A Neural Network with 1 Hidden Layer and 1 Neuron, using a softplus activation function.  
 ```{r nn1 Neural Network}
 plot(nn2, rep = "best")
 ```
@@ -143,8 +159,7 @@ nn2: 1 Hidden Layer, 1 Neuron, softplus activation function
 nn3: 9 Hidden Layer, 1 Neuron, logistic activation function  
 nn4: 9 Hidden Layer, 1 Neuron, softplus activation function  
 <br />
-For our Neural Network the graphic on the next slide shows that the more complex our NN, the worse it .  
-NN is having a really hard time working through the sparse underlying dataset. 
+For our Neural Network the graphic below shows that the more complex our NN, the worse it actually performs. One explanation for this could be that NN is having a really hard time working through the sparse underlying dataset. Thus, plateuing around, and not converging towards an accurate prediction.
 
 
 
