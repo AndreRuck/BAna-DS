@@ -73,7 +73,7 @@ test_nNA <- ohieVariables_nNA[-index_nNA,]
 ## Underlying Algorithm behind predictions
 For the first data set we used Mutliple Linear Regression as our underlying algorithm.
 
-We used unsupervised learning (k nearest neighbour) to create an additional variable which increased R^2 from 0.75 to 0.90 and reduced RMSE by more than 60%
+We used unsupervised learning (k nearest neighbour) to create an additional variable which increased R^2 from 0.75 to 0.90 and reduced RMSE by more than 33%
 
 ```{r insurance, message=FALSE, warning=FALSE}
 set.seed(123)
