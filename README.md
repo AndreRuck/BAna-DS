@@ -7,17 +7,19 @@ otherwise simply use another branch
 
 # Info on the current files in the repo: (please add your explanation if you add a file)
 
-OHIE_features = guide for shiny implementation: an excel document explaining all the variables used in the ohie model
+OHIE_features.xlsx = guide for shiny implementation: an excel document explaining all the variables used in the ohie model
 
-OHIE_wrangle = the r script containing all data wrangling on the OHIE dataset
+OHIE_wrangle.R = the r script containing all data wrangling on the OHIE dataset
 
 OHIE_wrangled.RDS = the cleaned dataframe. This forms the base of our OHIE analysis. (24 variables)
 
 OHIE_Final_Selection.RDS = cleaned dataframe without unique identifier's and statistically unimpactful variables. (15 variables)
 
-OHIE_featureSelection = depreciated OHIE data wrangling script
-
 OHIE_analysis.R = forecasting models on OHIE dataset, which is imported from OHIE_wrangled
+
+neural_nets.R = Neural Nets R code.
+
+NN.RData = Neural Nets models saved.
 
 model_step_rds = predictions multi model regression save (step model)
 
@@ -25,7 +27,7 @@ ui and server: 1. step genrating by visualization done. 2. making predictions ba
 
 dredlm.rds & dredlm.RData = files containing the ACI scores of different ohie predictions model (calculations take forever so thats why they are saved there)
 
-ui & serber_1: main framework for the linear regression analysis done (if enough time, comparing different profil as an added value for the customer and fine tuning:icon, color)
+ui & server_1: main framework for the linear regression analysis done (if enough time, comparing different profil as an added value for the customer and fine tuning:icon, color)
 
 ohie shiny app: ui/server prototyp for analysis. additionally to this folder new csv file without NA's value for the vizualization. 
 
@@ -39,5 +41,7 @@ prototype2: different way of tabs. provide simultanously both solution as a proc
 prototype4: ready to provide (more or less). xbooost works finally :)
 
 Part_1_kaggle: Everything regarding kaggle (dataset, modelling, statistics)
+
+Part_2_OHIE: Everything regarding OHIE (datasets, wrangled datasets, code, preliminary datasets for further extrapolations)
 
 Part_3_shiny: All data and models for shiny implementation.
