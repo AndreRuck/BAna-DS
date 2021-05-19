@@ -1,8 +1,16 @@
-# General:
+# General Github instructions:
 your files are only shared if you commit AND push to origin afterwards
- 
+  
 if committing/pushing results in a conflict only try to resolve it yourself if it is small/straightforward to do so and you are confident that you wont be breaking the code,
 otherwise simply use another branch
+
+
+# Overall structure of the submitted documents
+We decided to split the overall solution in parts to structure our solution. Nevertheless, if you solely run the folder with the shiny app, everything will be included. This split rather allows to better understand the models we used and worked with in more depth and more comments.
+
+Part 1 is about the Medical Cost Personal datasets which we use for the basic needs prediction
+Part 2 is about the Oregon Health Insurance Experiment which we use for the specific needs prediction and give an in-depth overview of our models
+Part 3 is the whole shiny app, which include both datasets and every document needed to run the application and present our overall solution.
 
 
 # Info on the current files in the repo: (please add your explanation if you add a file)
